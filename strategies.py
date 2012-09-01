@@ -6,7 +6,7 @@ logging.basicConfig()
 LOGGING_LEVEL = logging.DEBUG
 
 class Strategy(object):
-    
+
     def __init__(self, name=None):
         self.orders = []
         if name == None:
@@ -14,24 +14,24 @@ class Strategy(object):
         self.name = name
         self.log = logging.getLogger(self.name)
         self.log.setLevel(LOGGING_LEVEL)
-    
+
     def order_callback(self, order):
-        """ Order callback should be set by backtester before 
+        """ Order callback should be set by backtester before
             the first `step`. """
-        raise NotImplementedError        
-        
+        raise NotImplementedError
+
     def process_datapoint(self, datapoint):
-        """ Method for hiding all internal operations, (e.g. tracking prices). 
+        """ Method for hiding all internal operations, (e.g. tracking prices).
             Backtester calls this before it calls `step`.
             Use `super` when overriding. """
         self.step(datapoint)
-        
+
     def step(self, datapoint):
         """ Main method, strategy decisions should start here.
         Do not use `super` when overriding. """
         raise NotImplementedError
-    
-    def order(self, timestamp, limit_price, volume, direction=None, 
+
+    def order(self, timestamp, limit_price, volume, direction=None,
       contract=''):
         """ Send order method. """
         if not direction:
@@ -45,7 +45,7 @@ class Strategy(object):
         self.order_callback(order)
 
 class PositionalStrategy(Strategy):
-    
+
     def __init__(self, name=None, contract='', volume=1.0, slippage=0.):
         '''
         * `slippage` determines assumed transaction costs when using naive
@@ -63,7 +63,7 @@ class PositionalStrategy(Strategy):
     @property
     def position(self):
         return self.positions[-1][2]
-    
+
     def process_datapoint(self, datapoint):
         timestamp = datapoint.timestamp
         C = datapoint.C
@@ -72,7 +72,7 @@ class PositionalStrategy(Strategy):
         if len(self.positions) == 0: # initial position = 0
             self.positions.append((timestamp, C, 0))
         super(PositionalStrategy, self).process_datapoint(datapoint)
-        
+
     def change_position(self, position, timestamp=None, price=None):
         if not timestamp:
             timestamp = self._timestamp
@@ -83,16 +83,16 @@ class PositionalStrategy(Strategy):
         volume = position - old_position
         self.positions.append((timestamp, price, position))
         limit_price = price + slip if volume > 0 else price - slip
-        self.log.debug('position changed from %s to %s' % (old_position, 
+        self.log.debug('position changed from %s to %s' % (old_position,
           position))
         self.order(timestamp, limit_price, volume)
-    
+
     ## Convenience methods --------------------------------------------------
     def exit(self):
         self.change_position(0)
-    
+
     def long(self):
         self.change_position(1)
-    
+
     def short(self):
         self.change_position(-1)

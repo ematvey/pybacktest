@@ -28,7 +28,7 @@ class EquityCurve(object):
               start=i[0][0].date(), stop=i[-1][0].date(), **s)
         else:
             return '<empty EquityCurve>'
-    
+
     def _get_cumsum_seq(self):
         """ calc cumsum sequence, analogous to _seq """
         if len(self._cumsum_seq) == len(self._seq):
@@ -67,7 +67,7 @@ class EquityCurve(object):
         self._cumsum += diff
 
     def merge(self, curve):
-        """ Merge given curve into this curve """ 
+        """ Merge given curve into this curve """
         # XXX should be based off time series addition? or w/e?
         c1 = self._seq
         if len(c1)==0:
@@ -111,7 +111,7 @@ class EquityCurve(object):
         sd_loss = np.std(losses)
         av = winrate*av_gain + (1-winrate)*av_loss
         sd = np.std(changes)
-        if sum(losses) != 0: 
+        if sum(losses) != 0:
             pf = -sum(gains)/sum(losses)
         else: pf = 0
         result = {}
@@ -196,7 +196,7 @@ class EquityCurve(object):
             print "mc maxdd estimation (%s runs):\n\tmax = %s\n\tmean = %s\n\tsd = %s\n\t%s quantiles = %s" % \
                 (runs, max(maxdds), round(np.mean(maxdds), 2), round(np.std(maxdds), 2), quantiles, tuple([round(q, 2) for q in qs]))
         return maxdds
-        
+
     def plot_mc_maxdd_estimate(self, runs=5000, mode=0.005, bins=100, title='maxdd estimate', **kwargs):
         maxdds = self.mc_maxdd_estimate(runs, mode, **kwargs)
         plt.title("%s, %s trials" % (title, runs))
@@ -229,7 +229,7 @@ class EquityCurve(object):
         plt.grid(True)
         if show:
             plt.show()
-        
+
     def hist(self, bins=100, mode='l', weighted=False):
         """Plot a histogram of returns distribution."""
         points = [inc for ts, inc in self._seq]
@@ -255,13 +255,13 @@ class EquityCurve(object):
         plt.grid(True)
         plt.plot(cor)
         plt.show()
-    
+
     @staticmethod
     def init_from_timeseries(increments):
         curve = EquityCurve()
         curve._seq = zip(increments.index, increments.values)
         return curve
-    
+
     @staticmethod
     def init_from_trades(trades):
         curve = EquityCurve()
@@ -279,7 +279,7 @@ class EquityCurve(object):
             pl = var + pos*p
             curve.add_point(ts, var + pos*p)
         return curve
-    
+
 
     @staticmethod
     def _test_changes(n=10):
@@ -308,9 +308,9 @@ class EquityCurve(object):
         print '----'
         curve = EquityCurve.init_from_trades(trades)
         return curve
-        
 
-        
+
+
 def test():
     print 'testing init_from_tables'
     c = EquityCurve._test_init_from_trades()
