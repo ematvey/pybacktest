@@ -1,8 +1,6 @@
-
-import logging
 import equity
 
-logging.basicConfig()
+import logging
 LOGGING_LEVEL = logging.DEBUG
 
 # specifies current data abstraction

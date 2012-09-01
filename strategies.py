@@ -2,7 +2,6 @@
 ## order format: (contract, timestamp, limit_price, volume, direction)
 
 import logging
-logging.basicConfig()
 LOGGING_LEVEL = logging.DEBUG
 
 class Strategy(object):
@@ -88,11 +87,11 @@ class PositionalStrategy(Strategy):
         self.order(timestamp, limit_price, volume)
 
     ## Convenience methods --------------------------------------------------
-    def exit(self):
-        self.change_position(0)
+    def exit(self, price=None):
+        self.change_position(0, price=price)
 
-    def long(self):
-        self.change_position(1)
+    def long(self, price=None):
+        self.change_position(1, price=price)
 
-    def short(self):
-        self.change_position(-1)
+    def short(self, price=None):
+        self.change_position(-1, price=price)
