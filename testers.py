@@ -1,9 +1,14 @@
 
 import logging
-import curve
+import equity
 
 logging.basicConfig()
 LOGGING_LEVEL = logging.DEBUG
+
+# specifies current data abstraction
+get_price = lambda datapoint: datapoint.O
+get_time = lambda datapoint: datapoint.timestamp
+
 
 class Backtester(object):
     ''' Backtester base class '''
@@ -25,13 +30,17 @@ class Backtester(object):
         self.trades = []
         self.log = logging.getLogger(self.__class__.__name__)
         self.log.setLevel(LOGGING_LEVEL)
+        calc = self._equity_calc = equity.EquityCalculator()
+        self.results = {'full equity curve': calc.full_curve, 
+                        'equity curve by trades': calc.trades_curve}
     
     def run(self):
         self.log.info('backtest started')
         for datapoint in self.data:
+            self._equity_calc.new_price(get_time(datapoint), 
+              get_price(datapoint))
             self.strategy.process_datapoint(datapoint)
-        self.curve = curve.EquityCurve.init_from_trades(self.trades)
-        return self.curve
+        self.log.info('backtest complete; results are in self.results')
     
     def _matching_callback(self, order):
         ''' Order is assumed to be (timestamp, limit_price, volume, direction)
@@ -41,7 +50,7 @@ class Backtester(object):
     def _trade(self, timestamp, price, volume, direction):
         self.log.debug('trade %s, price %s, volume %s' % \
           (timestamp, price, volume))
-        self.trades.append((timestamp, price, volume, direction))
+        self._equity_calc.new_trade(timestamp, price, volume, direction)
 
 
 class SimpleBacktester(Backtester):
