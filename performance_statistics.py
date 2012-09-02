@@ -70,8 +70,10 @@ def recovery_factor(changes):
     return final_equity(changes) / maxdd(changes)
 rf = recovery_factor
 
-def maxdd_montecarlo(changes, runs=5000, length=len(changes),
-  serial_dependence=None, quantiles=(0.75, 0.9, 0.975)):
+def maxdd_montecarlo(changes, runs=5000, length=None, serial_dependence=None, 
+  quantiles=(0.75, 0.9, 0.975), return_array=False):
+    if not length:
+        length = len(changes)
     if not serial_dependence:
         seq = changes
         pick = lambda seq: [random.choice(seq)]
@@ -95,9 +97,10 @@ def maxdd_montecarlo(changes, runs=5000, length=len(changes),
             new_seq += pick(seq)
         maxdds.append(maxdd(new_seq))
     results = {
-        'array of samples maxdds': maxdds,
         'mean maxdd': numpy.mean(maxdds),
         'sd of maxdds': numpy.std(maxdds),
-        'quantiles': dict(zip(quantiles, mquantiles(maxdd, quantiles)))
+        'quantiles': dict(zip(quantiles, mquantiles(maxdds, quantiles)))
         }
+    if return_array:
+        results['array of maxdd samples'] = maxdds
     return results

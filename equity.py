@@ -1,6 +1,5 @@
 import numpy
 import pandas
-import logging
 import performance_statistics
 
 class TradeError(Exception):
@@ -67,7 +66,7 @@ class EquityCurve(object):
         s = stat.lower()
         func = getattr(performance_statistics, stat.lower(), None)
         if func:
-            return func(self._changes)
+            return func(numpy.array(self._changes))
         else:
             raise KeyError('Cannot calculate statistic with name `%s`', stat)
 
