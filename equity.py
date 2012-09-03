@@ -40,6 +40,8 @@ class EquityCalculator(object):
         self._full_curve = EquityCurve()
         self._trades_curve_merged.merge(self._trades_curve)
         self._trades_curve = EquityCurve()
+        self.pos = 0
+        self.var = 0
 
     @property
     def full_curve(self):
