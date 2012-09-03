@@ -38,7 +38,7 @@ class EquityCalculator(object):
             on a whole basket of instruments. '''
         self._full_curve_merged.merge(self._full_curve)
         self._full_curve = EquityCurve()
-        self._trades_curve_merged.merge(self._full_curve)
+        self._trades_curve_merged.merge(self._trades_curve)
         self._trades_curve = EquityCurve()
 
     @property
@@ -112,7 +112,12 @@ class EquityCurve(object):
             raise Exception('Unsupported `mode` of statistics request')
 
     def merge(self, curve):
+        ''' Merge two curves (by diffs). Used for backet testing.
+            Warning: recorded trades will be discarded for self to avoid
+            potential confusion. '''
         s = self.series(mode='changes').add(curve.series(mode='changes'),
           fill_value=0)
         self._changes = list(s.values)
         self._times = list(s.index)
+        if hasattr(self, 'trades'):
+            del self.trades

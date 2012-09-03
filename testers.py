@@ -13,13 +13,15 @@ def get_price(datapoint):
         return getattr(datapoint, 'O', getattr(datapoint, 'price',
           getattr(datapoint, 'C')))
     except AttributeError:
-        raise DatapointError('No `O`, `price` or `C` attribute in Datapoint')
+        raise DatapointError('No `O`/`price`/`C` attribute in Datapoint %s' % \
+          datapoint)
 
 def get_time(datapoint):
     try:
         return datapoint.timestamp
     except AttributeError:
-        raise DatapointError('No `timestamp` attribute in Datapoint')
+        raise DatapointError('No `timestamp` attribute in Datapoint %s' % \
+          datapoint)
 
 
 class Backtester(object):
@@ -43,8 +45,8 @@ class Backtester(object):
         self.log = logging.getLogger(self.__class__.__name__)
         self.log.setLevel(log_level or LOGGING_LEVEL)
         calc = self._equity_calc = equity.EquityCalculator()
-        self.results = {'full equity curve': calc.full_curve,
-                        'equity curve by trades': calc.trades_curve}
+        self.results = {'full': calc.full_curve,
+                        'trades': calc.trades_curve}
         if run:
             self.run()
 
