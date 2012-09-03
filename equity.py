@@ -9,24 +9,49 @@ class EquityCalculator(object):
     ''' Calculates EquityCurve from trades and price changes '''
 
     def __init__(self, full_curve=None, trades_curve=None):
-        self.full_curve = full_curve or EquityCurve()
-        self.trades_curve = trades_curve or EquityCurve()
+        self._full_curve = full_curve or EquityCurve()
+        self._trades_curve = trades_curve or EquityCurve()
+        self._full_curve_merged = EquityCurve()
+        self._trades_curve_merged = EquityCurve()
         self.pos = 0
         self.var = 0
+        self.now = None
 
     def new_price(self, timestamp, price):
-        self.full_curve.add_point(timestamp, self.var + self.pos * price)
+        self.now = timestamp
+        self._full_curve.add_point(timestamp, self.var + self.pos * price)
 
     def new_trade(self, timestamp, price, volume, direction):
-        if timestamp < self.full_curve._times[-1]:
+        if timestamp < self.now:
             raise TradeError('Attempting to make trade in the past')
         if direction == 'sell':
             volume *= -1
         self.var -= price * volume
         self.pos += volume
         equity = self.var + self.pos * price
-        self.trades_curve.add_point(timestamp, equity)
-        self.trades_curve.add_trade((timestamp, price, volume))
+        self._trades_curve.add_point(timestamp, equity)
+        self._trades_curve.add_trade((timestamp, price, volume))
+
+    def merge(self):
+        ''' Record current results and prepare to start calculating equity
+            from the scratch. Purpose: to be able to backtest single strategy
+            on a whole basket of instruments. '''
+        self._full_curve_merged.merge(self._full_curve)
+        self._full_curve = EquityCurve()
+        self._trades_curve_merged.merge(self._full_curve)
+        self._trades_curve = EquityCurve()
+
+    @property
+    def full_curve(self):
+        if not len(self._full_curve) == 0:
+            self.merge()
+        return self._full_curve_merged
+
+    @property
+    def trades_curve(self):
+        if not len(self._trades_curve) == 0:
+            self.merge()
+        return self._trades_curve_merged
 
 
 class EquityCurve(object):
@@ -38,6 +63,9 @@ class EquityCurve(object):
         self._times = []
         self._cumsum = 0
         self.trades = []
+
+    def __len__(self):
+        return len(self._changes)
 
     def add_change(self, timestamp, equity_change):
         self._changes.append(equity_change)
