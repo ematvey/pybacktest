@@ -116,13 +116,53 @@ class EquityCurve(object):
         else:
             raise Exception('Unsupported `mode` of statistics request')
 
-    def merge(self, curve):
-        ''' Merge two curves. Used for backet testing.
+    def merge(self, curve, overwrite=True):
+        ''' Merge two curves. Used for backet testing. Will overwrite self
+            unless `overwrite` was set to False.
             Warning: recorded trades will be discarded for self to avoid
             potential confusion. '''
-        s = self.series(mode='changes').add(curve.series(mode='changes'),
-          fill_value=0)
-        self._changes = list(s.values)
-        self._times = list(s.index)
-        if hasattr(self, 'trades'):
-            del self.trades
+        changes1 = self._changes
+        changes2 = curve._changes
+        times1 = self._times
+        times2 = curve._times
+        if len(changes1)==0:
+            if overwrite:
+                self._changes = curve._changes
+                self._times = curve._times
+                return
+            else:
+                return curve
+        if len(changes2)==0:
+            return self * overwrite or None
+        i = j = 0
+        changes = []
+        times = []
+        while i < len(changes1) or j < len(changes2):
+            if i < len(changes1) and j < len(changes2) and \
+              times1[i] == times2[j]:
+                times.append(times1[i])
+                changes.append(changes1[i] + changes2[j])
+                i += 1
+                j += 1
+            elif j >= len(changes2) or i < len(changes1) and \
+              times1[i] < times2[j]:
+                times.append(times1[i])
+                changes.append(changes1[i])
+                i += 1
+            elif i >= len(changes1) or j < len(changes2) and \
+              times1[i] > times2[j]:
+                times.append(times2[j])
+                changes.append(changes2[j])
+                j += 1
+            else:
+                raise Exception("EquityCurve merge error")
+        if overwrite:
+            self._changes = changes
+            self._times = times
+            if hasattr(self, 'trades'):
+                del self.trades
+        else:
+            eq = EquityCurve()
+            eq._changes = changes
+            eq._times = times
+            return eq
