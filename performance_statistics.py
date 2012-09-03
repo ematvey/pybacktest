@@ -16,13 +16,20 @@ full = (
     'sortino',
     'maxdd',
     'maxdd_montecarlo',
+    'points'
     )
+fast = list(full)
+fast.remove('maxdd_montecarlo')
+
 
 def average(changes):
-    return numpy.mean(changes)
+    return numpy.mean(changes[changes != 0])
 
 def sd(changes):
     return numpy.std(changes)
+
+def points(changes):
+    return sum(changes != 0)
 
 def mean_profit(changes):
     return numpy.mean(changes[changes > 0])
@@ -44,7 +51,7 @@ def final_equity(changes):
 profit = final_equity
 
 def profit_factor(changes):
-    return float(sum(changes[changes > 0])) / sum(changes[changes < 0])
+    return float(sum(changes[changes > 0])) / -sum(changes[changes < 0])
 pf = profit_factor
 
 def sharpe(changes):

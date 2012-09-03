@@ -108,11 +108,13 @@ class EquityCurve(object):
         else:
             raise KeyError('Cannot calculate statistic with name `%s`', stat)
 
-    def statistics(self, mode='full'):
+    def statistics(self, mode='fast'):
         ''' Calculate all possible statistics, as specified in
             `performance_statistics` '''
         if mode == 'full':
             return dict((k, self[k]) for k in performance_statistics.full)
+        if mode == 'fast':
+            return dict((k, self[k]) for k in performance_statistics.fast)
         else:
             raise Exception('Unsupported `mode` of statistics request')
 
