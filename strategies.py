@@ -50,6 +50,10 @@ class PositionalStrategy(Strategy):
         * `slippage` determines assumed transaction costs when using naive
             backtester; when using matching engine backtester, slippage becomes
             actual limit price shift.
+        * `volume` determines max size for backtesting. E.g., setting volume=5
+            followed by self.change_position(0.5) will yield a buy order with
+            volume=2.5.
+        * `contract` is not used anywhere at the moment.
         '''
         self.positions = []
         self.contract = contract
@@ -61,6 +65,7 @@ class PositionalStrategy(Strategy):
 
     @property
     def position(self):
+        ''' Current position. Always in range [-1, 1]. '''
         return self.positions[-1][2]
 
     def process_datapoint(self, datapoint):

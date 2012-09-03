@@ -84,7 +84,10 @@ class EquityCurve(object):
         self.trades.append(trade)
 
     def series(self, mode='equity'):
-        ''' Pandas TimeSeries object of equity '''
+        ''' Pandas TimeSeries object of equity/changes.
+        * `mode` determines type, could be "equity" for cumulative equity
+           dynamic or "changes" for time series of changes between neighbour
+           equity points. '''
         if mode == 'equity':
             return pandas.TimeSeries(data=numpy.cumsum(self._changes),
               index=self._times)
@@ -114,7 +117,7 @@ class EquityCurve(object):
             raise Exception('Unsupported `mode` of statistics request')
 
     def merge(self, curve):
-        ''' Merge two curves (by diffs). Used for backet testing.
+        ''' Merge two curves. Used for backet testing.
             Warning: recorded trades will be discarded for self to avoid
             potential confusion. '''
         s = self.series(mode='changes').add(curve.series(mode='changes'),
