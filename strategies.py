@@ -2,17 +2,17 @@
 ## order format: (contract, timestamp, limit_price, volume, direction)
 
 import logging
-LOGGING_LEVEL = logging.DEBUG
+LOGGING_LEVEL = logging.INFO
 
 class Strategy(object):
 
-    def __init__(self, name=None):
+    def __init__(self, name=None, log_level=None):
         self.orders = []
         if name == None:
             name = self.__class__.__name__
         self.name = name
         self.log = logging.getLogger(self.name)
-        self.log.setLevel(LOGGING_LEVEL)
+        self.log.setLevel(log_level or LOGGING_LEVEL)
 
     def order_callback(self, order):
         """ Order callback should be set by backtester before

@@ -1,17 +1,31 @@
 import equity
 
 import logging
-LOGGING_LEVEL = logging.DEBUG
+LOGGING_LEVEL = logging.INFO
 
-# specifies current data abstraction
-get_price = lambda datapoint: datapoint.O
-get_time = lambda datapoint: datapoint.timestamp
+
+# Specifications for used data abstraction; see 'data.py' for exacts
+class DatapointError(AttributeError):
+    pass
+
+def get_price(datapoint):
+    try:
+        return getattr(datapoint, 'O', getattr(datapoint, 'price',
+          getattr(datapoint, 'C')))
+    except AttributeError:
+        raise DatapointError('No `O`, `price` or `C` attribute in Datapoint')
+
+def get_time(datapoint):
+    try:
+        return datapoint.timestamp
+    except AttributeError:
+        raise DatapointError('No `timestamp` attribute in Datapoint')
 
 
 class Backtester(object):
     ''' Backtester base class '''
 
-    def __init__(self, strategy, data, run=True):
+    def __init__(self, strategy, data, run=True, log_level=None):
         '''
         * `strategy` should be Strategy-compatible object, i.e. has
             `process_datapoint` method that accepts datapoints and abstract
@@ -27,17 +41,21 @@ class Backtester(object):
         self.data = data
         self.trades = []
         self.log = logging.getLogger(self.__class__.__name__)
-        self.log.setLevel(LOGGING_LEVEL)
+        self.log.setLevel(log_level or LOGGING_LEVEL)
         calc = self._equity_calc = equity.EquityCalculator()
         self.results = {'full equity curve': calc.full_curve,
                         'equity curve by trades': calc.trades_curve}
+        if run:
+            self.run()
 
     def run(self):
         self.log.info('backtest started')
-        for datapoint in self.data:
-            self._equity_calc.new_price(get_time(datapoint),
-              get_price(datapoint))
-            self.strategy.process_datapoint(datapoint)
+        for dataset in self.data:
+            for datapoint in dataset:
+                self._equity_calc.new_price(get_time(datapoint),
+                  get_price(datapoint))
+                self.strategy.process_datapoint(datapoint)
+            self._equity_calc.merge()
         self.log.info('backtest complete; results are in self.results')
 
     def _matching_callback(self, order):

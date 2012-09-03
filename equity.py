@@ -81,11 +81,16 @@ class EquityCurve(object):
         ''' Add trade. Not used in any computation currently. '''
         self.trades.append(trade)
 
-    @property
-    def series(self):
+    def series(self, mode='equity'):
         ''' Pandas TimeSeries object of equity '''
-        return pandas.TimeSeries(data=numpy.cumsum(self._changes),
-          index=self._times)
+        if mode == 'equity':
+            return pandas.TimeSeries(data=numpy.cumsum(self._changes),
+              index=self._times)
+        elif mode == 'changes':
+            return pandas.TimeSeries(data=self._changes, index=self._times)
+        else:
+            raise Exception('Unsupported mode requested during export '\
+              'into pandas.TimeSeries')
 
     def __getitem__(self, stat):
         ''' Calculate statistic `stat` on equity dynamics '''
@@ -105,3 +110,9 @@ class EquityCurve(object):
             return dict((k, self[k]) for k in performance_statistics.full)
         else:
             raise Exception('Unsupported `mode` of statistics request')
+
+    def merge(self, curve):
+        s = self.series(mode='changes').add(curve.series(mode='changes'),
+          fill_value=0)
+        self._changes = list(s.values)
+        self._times = list(s.index)
