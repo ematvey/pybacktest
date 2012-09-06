@@ -42,8 +42,6 @@ class EquityCalculator(object):
         if diff != 0:
             self.log.debug('new equity point %s registered on %s', equity, timestamp)
             self.log.debug('equity change: %s', diff)
-            if diff < -700:
-                self.log.error('\nWRONG DIFF\n')
         self._trades_curve.add_point(timestamp, equity)
         self._trades_curve.add_trade((timestamp, price, volume))
 
