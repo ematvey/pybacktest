@@ -64,7 +64,7 @@ class Backtester(object):
         ''' Match order from Strategy.
             Order is assumed to be (timestamp, limit_price, volume, direction)
             tuple. '''
-        NotImplementedError
+        raise NotImplementedError
 
     def _trade(self, timestamp, price, volume, direction):
         self.log.debug('trade %s, price %s, volume %s' % \

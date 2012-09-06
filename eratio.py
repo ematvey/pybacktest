@@ -57,7 +57,7 @@ class ERatioAnalyzer(object):
         self.finalized = []
         self.entries = []
         
-    def plot(self, median=False, show=False, extra_text=None):
+    def plot(self, median=False, show=True, extra_text=None):
         MAE = self.MAE
         MFE = self.MFE
         MFE_mean = []
