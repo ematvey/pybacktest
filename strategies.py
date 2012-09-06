@@ -62,6 +62,7 @@ class PositionalStrategy(Strategy):
         self.slippage = slippage
         self._last = None
         self._timestamp = None
+        self._first_timestamp = None
         super(PositionalStrategy, self).__init__(name, log_level)
 
     @property
@@ -72,6 +73,8 @@ class PositionalStrategy(Strategy):
     def process_datapoint(self, datapoint):
         timestamp = datapoint.timestamp
         C = datapoint.C
+        if self._timestamp and self._timestamp.date() != timestamp.date():
+            self._first_timestamp = timestamp
         self._last = C
         self._timestamp = timestamp
         if len(self.positions) == 0: # initial position = 0
@@ -79,6 +82,8 @@ class PositionalStrategy(Strategy):
         super(PositionalStrategy, self).process_datapoint(datapoint)
 
     def change_position(self, position, timestamp=None, price=None):
+        if self._first_timestamp == timestamp:
+            self.log.warning("Position change on the openning of a day")
         if not timestamp:
             timestamp = self._timestamp
         if not price:
