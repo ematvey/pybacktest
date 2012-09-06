@@ -44,7 +44,7 @@ class Backtester(object):
         self.trades = []
         self.log = logging.getLogger(self.__class__.__name__)
         self.log.setLevel(log_level or LOGGING_LEVEL)
-        calc = self._equity_calc = equity.EquityCalculator()
+        calc = self._equity_calc = equity.EquityCalculator(log_level=log_level)
         self.results = {'full': calc.full_curve,
                         'trades': calc.trades_curve}
         if run:
@@ -57,6 +57,7 @@ class Backtester(object):
                 self._equity_calc.new_price(get_time(datapoint),
                   get_price(datapoint))
                 self.strategy.process_datapoint(datapoint)
+            self.strategy.finalize()
             self._equity_calc.merge()
         self.log.info('backtest complete; results are in self.results')
 

@@ -2,13 +2,16 @@ import numpy
 import pandas
 import performance_statistics
 
+import logging
+LOGGING_LEVEL = logging.INFO
+
 class TradeError(Exception):
     pass
 
 class EquityCalculator(object):
     ''' Calculates EquityCurve from trades and price changes '''
 
-    def __init__(self, full_curve=None, trades_curve=None):
+    def __init__(self, full_curve=None, trades_curve=None, log_level=None):
         self._full_curve = full_curve or EquityCurve()
         self._trades_curve = trades_curve or EquityCurve()
         self._full_curve_merged = EquityCurve()
@@ -16,19 +19,31 @@ class EquityCalculator(object):
         self.pos = 0
         self.var = 0
         self.now = None
+        self.price = None
+        self.log = logging.getLogger(self.__class__.__name__)
+        self.log.setLevel(log_level or LOGGING_LEVEL)
 
     def new_price(self, timestamp, price):
         self.now = timestamp
+        self.price = price
         self._full_curve.add_point(timestamp, self.var + self.pos * price)
 
     def new_trade(self, timestamp, price, volume, direction):
-        if timestamp < self.now:
-            raise TradeError('Attempting to make trade in the past')
+        #if timestamp < self.now:
+        #    raise TradeError('Attempting to make trade in the past')
+        self.log.debug('trade %s, price %s, volume %s, dir %s' % \
+          (timestamp, price, volume, direction))
         if direction == 'sell':
             volume *= -1
         self.var -= price * volume
         self.pos += volume
         equity = self.var + self.pos * price
+        diff = equity - sum(self._trades_curve._changes)
+        if diff != 0:
+            self.log.debug('new equity point %s registered on %s', equity, timestamp)
+            self.log.debug('equity change: %s', diff)
+            if diff < -700:
+                self.log.error('\nWRONG DIFF\n')
         self._trades_curve.add_point(timestamp, equity)
         self._trades_curve.add_trade((timestamp, price, volume))
 
@@ -36,11 +51,12 @@ class EquityCalculator(object):
         ''' Record current results and prepare to start calculating equity
             from the scratch. Purpose: to be able to backtest single strategy
             on a whole basket of instruments. '''
+        if self.pos != 0:
+            raise Exception('Merge requested when position != 0')
         self._full_curve_merged.merge(self._full_curve)
         self._full_curve = EquityCurve()
         self._trades_curve_merged.merge(self._trades_curve)
         self._trades_curve = EquityCurve()
-        self.pos = 0
         self.var = 0
 
     @property

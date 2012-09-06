@@ -30,6 +30,10 @@ class Strategy(object):
         Do not use `super` when overriding. """
         raise NotImplementedError
 
+    def finalize(self):
+        """ Finalize everything before close, i.e. shut down the position. """
+        raise NotImplementedError
+
     def order(self, timestamp, limit_price, volume, direction=None):
         """ Send order method. """
         if not direction:
@@ -88,12 +92,17 @@ class PositionalStrategy(Strategy):
           position))
         self.order(timestamp, limit_price, volume)
 
+    def finalize(self):
+        self.log.debug('finalization requested')
+        self.change_position(0)
+        self.log.debug('finalized')
+
     ## Convenience methods --------------------------------------------------
-    def exit(self, price=None):
-        self.change_position(0, price=price)
+    def exit(self, price=None, timestamp=None):
+        self.change_position(0, price=price, timestamp=timestamp)
 
-    def long(self, price=None):
-        self.change_position(1, price=price)
+    def long(self, price=None, timestamp=None):
+        self.change_position(1, price=price, timestamp=timestamp)
 
-    def short(self, price=None):
-        self.change_position(-1, price=price)
+    def short(self, price=None, timestamp=None):
+        self.change_position(-1, price=price, timestamp=timestamp)
