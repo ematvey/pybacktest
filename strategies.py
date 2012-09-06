@@ -1,5 +1,5 @@
 ## Core classes for strategies
-## order format: (contract, timestamp, limit_price, volume, direction)
+## order format: (timestamp, limit_price, volume, direction)
 
 import logging
 LOGGING_LEVEL = logging.INFO
@@ -30,8 +30,7 @@ class Strategy(object):
         Do not use `super` when overriding. """
         raise NotImplementedError
 
-    def order(self, timestamp, limit_price, volume, direction=None,
-      contract=''):
+    def order(self, timestamp, limit_price, volume, direction=None):
         """ Send order method. """
         if not direction:
             if volume > 0:
@@ -45,7 +44,7 @@ class Strategy(object):
 
 class PositionalStrategy(Strategy):
 
-    def __init__(self, name=None, contract='', volume=1.0, slippage=0.):
+    def __init__(self, name=None, volume=1.0, slippage=0., log_level=None):
         '''
         * `slippage` determines assumed transaction costs when using naive
             backtester; when using matching engine backtester, slippage becomes
@@ -53,15 +52,13 @@ class PositionalStrategy(Strategy):
         * `volume` determines max size for backtesting. E.g., setting volume=5
             followed by self.change_position(0.5) will yield a buy order with
             volume=2.5.
-        * `contract` is not used anywhere at the moment.
         '''
         self.positions = []
-        self.contract = contract
         self.volume = volume
         self.slippage = slippage
         self._last = None
         self._timestamp = None
-        super(PositionalStrategy, self).__init__(name)
+        super(PositionalStrategy, self).__init__(name, log_level)
 
     @property
     def position(self):
@@ -87,7 +84,7 @@ class PositionalStrategy(Strategy):
         volume = position - old_position
         self.positions.append((timestamp, price, position))
         limit_price = price + slip if volume > 0 else price - slip
-        self.log.debug('position changed from %s to %s' % (old_position,
+        self.log.debug('position change : %s -> %s' % (old_position,
           position))
         self.order(timestamp, limit_price, volume)
 
