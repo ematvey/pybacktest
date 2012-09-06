@@ -111,14 +111,14 @@ class EquityCurve(object):
             raise Exception('Unsupported mode requested during export '\
               'into pandas.TimeSeries')
 
-    def __getitem__(self, stat):
+    def __getitem__(self, stat, precision=2):
         ''' Calculate statistic `stat` on equity dynamics '''
         if len(self._changes) == 0:
             raise Exception('Cannot calculate statistics on empty EquityCurve')
         s = stat.lower()
         func = getattr(performance_statistics, stat.lower(), None)
         if func:
-            return func(numpy.array(self._changes))
+            return round(func(numpy.array(self._changes)), precision)
         else:
             raise KeyError('Cannot calculate statistic with name `%s`', stat)
 

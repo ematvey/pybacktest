@@ -4,9 +4,12 @@ from scipy.stats.mstats import mquantiles
 
 full = (
     'average',
+    'median',
     'sd',
     'mean_profit',
     'mean_loss',
+    'median_profit',
+    'median_loss',
     'sd_profits',
     'sd_losses',
     'winrate',
@@ -25,8 +28,11 @@ fast.remove('maxdd_montecarlo')
 def average(changes):
     return numpy.mean(changes[changes != 0])
 
+def median(changes):
+    return numpy.median(changes[changes != 0])
+
 def sd(changes):
-    return numpy.std(changes)
+    return numpy.std(changes[changes != 0])
 
 def points(changes):
     return sum(changes != 0)
@@ -37,6 +43,12 @@ def mean_profit(changes):
 def mean_loss(changes):
     return numpy.mean(changes[changes < 0])
 
+def median_profit(changes):
+    return numpy.median(changes[changes > 0])
+
+def median_loss(changes):
+    return numpy.median(changes[changes < 0])
+
 def sd_profits(changes):
     return numpy.std(changes[changes > 0])
 
@@ -44,7 +56,7 @@ def sd_losses(changes):
     return numpy.std(changes[changes < 0])
 
 def winrate(changes):
-    return float(sum(changes > 0)) / sum(changes < 0)
+    return float(sum(changes > 0)) / sum(changes != 0)
 
 def final_equity(changes):
     return sum(changes)
