@@ -83,7 +83,7 @@ class PositionalStrategy(Strategy):
 
     def change_position(self, position, timestamp=None, price=None):
         if self._first_timestamp == timestamp:
-            self.log.warning("Position change on the openning of a day")
+            self.log.warning("position change on the openning of a day")
         if not timestamp:
             timestamp = self._timestamp
         if not price:

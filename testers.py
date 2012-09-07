@@ -45,8 +45,8 @@ class Backtester(object):
         self.log = logging.getLogger(self.__class__.__name__)
         self.log.setLevel(log_level or LOGGING_LEVEL)
         calc = self._equity_calc = equity.EquityCalculator(log_level=log_level)
-        self.results = {'full': calc.full_curve,
-                        'trades': calc.trades_curve}
+        self.full_curve = calc.full_curve
+        self.trades_curve = calc.trades_curve
         if run:
             self.run()
 

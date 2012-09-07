@@ -14,8 +14,8 @@ class EquityCalculator(object):
     def __init__(self, full_curve=None, trades_curve=None, log_level=None):
         self._full_curve = full_curve or EquityCurve()
         self._trades_curve = trades_curve or EquityCurve()
-        self._full_curve_merged = EquityCurve()
-        self._trades_curve_merged = EquityCurve()
+        self._full_curve_merged = EquityCurve(log_level=log_level)
+        self._trades_curve_merged = EquityCurve(log_level=log_level)
         self.pos = 0
         self.var = 0
         self.now = None
@@ -29,8 +29,6 @@ class EquityCalculator(object):
         self._full_curve.add_point(timestamp, self.var + self.pos * price)
 
     def new_trade(self, timestamp, price, volume, direction):
-        #if timestamp < self.now:
-        #    raise TradeError('Attempting to make trade in the past')
         self.log.debug('trade %s, price %s, volume %s, dir %s' % \
           (timestamp, price, volume, direction))
         if direction == 'sell':
@@ -43,7 +41,7 @@ class EquityCalculator(object):
             self.log.debug('new equity point %s registered on %s', equity, timestamp)
             self.log.debug('equity change: %s', diff)
         self._trades_curve.add_point(timestamp, equity)
-        self._trades_curve.add_trade((timestamp, price, volume))
+        self._trades_curve.add_trade(timestamp, price, volume)
 
     def merge(self):
         ''' Record current results and prepare to start calculating equity
@@ -74,11 +72,13 @@ class EquityCurve(object):
     ''' Keeps history of equity changes and calculates various performance
         statistics. Optional: keeps track of trades. '''
 
-    def __init__(self):
-        self._changes = []
-        self._times = []
+    def __init__(self, log_level=None):
+        self._changes = list()
+        self._times = list()
         self._cumsum = 0
-        self.trades = []
+        self.trades = dict()
+        self.log = logging.getLogger(self.__class__.__name__)
+        self.log.setLevel(log_level or LOGGING_LEVEL)
 
     def __len__(self):
         return len(self._changes)
@@ -93,9 +93,16 @@ class EquityCurve(object):
         self._cumsum = equity
         self._times.append(timestamp)
 
-    def add_trade(self, trade):
+    def add_trade(self, timestamp, price, volume):
         ''' Add trade. Not used in any computation currently. '''
-        self.trades.append(trade)
+        if volume != 0:
+            if timestamp in self.trades:
+                raise Exception("Trade recording error: trade with this "\
+                                "timestamp is already present!")
+            self.trades[timestamp] = (price, volume)
+        else:
+            self.log.warning("trade with 0 volume: %s %s %s", timestamp, 
+                             price, volume)
 
     def series(self, mode='equity'):
         ''' Pandas TimeSeries object of equity/changes.
@@ -145,6 +152,7 @@ class EquityCurve(object):
             if overwrite:
                 self._changes = curve._changes
                 self._times = curve._times
+                self.trades = curve.trades
                 return
             else:
                 return curve
@@ -172,13 +180,26 @@ class EquityCurve(object):
                 j += 1
             else:
                 raise Exception("EquityCurve merge error")
+        trades = self.trades.copy()
+        print len(self.trades), len(curve.trades)
+        if hasattr(self, 'trades'):
+            if len(curve.trades) != 0:
+                if len(trades) == 0:
+                    trades = curve.trades
+                elif len(curve.trades) != 0:
+                    for time in curve.trades.keys():
+                        if time in self.trades:
+                            raise Exception("EquityCurve merge error: "\
+                                             "attempting to merge a trade "\
+                                             "with non-unique timestamp")
+                    self.trades.update(curve.trades)
         if overwrite:
             self._changes = changes
             self._times = times
-            if hasattr(self, 'trades'):
-                del self.trades
+            self.trades = trades
         else:
             eq = EquityCurve()
             eq._changes = changes
             eq._times = times
+            eq.trades = trades
             return eq
