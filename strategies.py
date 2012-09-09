@@ -99,7 +99,8 @@ class PositionalStrategy(Strategy):
 
     def finalize(self):
         self.log.debug('finalization requested')
-        self.change_position(0)
+        if self.position != 0:
+            self.change_position(0)
         self.log.debug('finalized')
 
     ## Convenience methods --------------------------------------------------

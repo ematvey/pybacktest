@@ -54,6 +54,7 @@ class Backtester(object):
         self.log.info('backtest started')
         for dataset in self.data:
             for datapoint in dataset:
+                self._current_point = datapoint
                 self._equity_calc.new_price(get_time(datapoint),
                   get_price(datapoint))
                 self.strategy.process_datapoint(datapoint)
@@ -70,6 +71,11 @@ class Backtester(object):
     def _trade(self, timestamp, price, volume, direction):
         self.log.debug('trade %s, price %s, volume %s' % \
           (timestamp, price, volume))
+        cp = self._current_point
+        if price > cp.H or price < cp.L:
+            self.log.error('requested trade price %s is not available '\
+                           'in current bar (H %s, L %s, C %s)', price,
+                           cp.H, cp.L, cp.C)
         self._equity_calc.new_trade(timestamp, price, volume, direction)
 
 
