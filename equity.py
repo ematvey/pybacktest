@@ -187,7 +187,6 @@ class EquityCurve(object):
             else:
                 raise Exception("EquityCurve merge error")
         trades = self.trades.copy()
-        print len(self.trades), len(curve.trades)
         if hasattr(self, 'trades'):
             if len(curve.trades) != 0:
                 if len(trades) == 0:
