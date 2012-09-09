@@ -1,12 +1,15 @@
 import numpy
 import pandas
-import performance_statistics
-
+import datetime
 import logging
 LOGGING_LEVEL = logging.INFO
 
+import performance_statistics
+
+
 class TradeError(Exception):
     pass
+
 
 class EquityCalculator(object):
     ''' Calculates EquityCurve from trades and price changes '''
@@ -97,9 +100,12 @@ class EquityCurve(object):
         ''' Add trade. Not used in any computation currently. '''
         if volume != 0:
             if timestamp in self.trades:
-                raise Exception("Trade recording error: trade with this "\
-                                "timestamp is already present!")
-            self.trades[timestamp] = (price, volume)
+                self.log.warning("trade with timestamp %s is already present,"\
+                                 " incrementing timestamp by 1 mcs" % timestamp)
+                self.add_trade(timestamp + datetime.timedelta(0, 0, 1),
+                               price, volume)
+            else:
+                self.trades[timestamp] = (price, volume)
         else:
             self.log.warning("trade with 0 volume: %s %s %s", timestamp, 
                              price, volume)
