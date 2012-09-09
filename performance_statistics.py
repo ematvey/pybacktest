@@ -10,6 +10,7 @@ full = (
     'mean_loss',
     'median_profit',
     'median_loss',
+    'payoff_ratio',
     'sd_profits',
     'sd_losses',
     'winrate',
@@ -48,6 +49,9 @@ def median_profit(changes):
 
 def median_loss(changes):
     return numpy.median(changes[changes < 0])
+
+def payoff_ratio(changes):
+    return mean_profit(changes) / -mean_loss(changes)
 
 def sd_profits(changes):
     return numpy.std(changes[changes > 0])
