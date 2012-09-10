@@ -27,11 +27,12 @@ class Strategy(object):
 
     def step(self, datapoint):
         """ Main method, strategy decisions should start here.
-        Do not use `super` when overriding. """
+            Do not use `super` when overriding. """
         raise NotImplementedError
 
     def finalize(self):
-        """ Finalize everything before close, i.e. shut down the position. """
+        """ Finalize everything before close, i.e. shut down the position,
+            reset indicators, etc."""
         raise NotImplementedError
 
     def order(self, timestamp, limit_price, volume, direction=None):
@@ -161,6 +162,8 @@ class PositionalStrategy(Strategy):
         self.log.debug('finalization requested')
         if self.position != 0:
             self.change_position(0)
+        self._current_point = None
+        self._first_timestamp = None
         self.log.debug('finalized')
 
     def exit(self, **kwargs):

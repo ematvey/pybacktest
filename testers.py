@@ -64,5 +64,4 @@ class SimpleBacktester(Backtester):
         account for expected slippage. '''
 
     def _matching_callback(self, order):
-        self.log.debug('recieved order %s', order)
         self._trade(*order)
