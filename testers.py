@@ -4,26 +4,6 @@ import logging
 LOGGING_LEVEL = logging.INFO
 
 
-# Specifications for used data abstraction; see 'data.py' for exacts
-class DatapointError(AttributeError):
-    pass
-
-def get_price(datapoint):
-    try:
-        return getattr(datapoint, 'O', getattr(datapoint, 'price',
-          getattr(datapoint, 'C')))
-    except AttributeError:
-        raise DatapointError('No `O`/`price`/`C` attribute in Datapoint %s' % \
-          datapoint)
-
-def get_time(datapoint):
-    try:
-        return datapoint.timestamp
-    except AttributeError:
-        raise DatapointError('No `timestamp` attribute in Datapoint %s' % \
-          datapoint)
-
-
 class Backtester(object):
     ''' Backtester base class '''
 
@@ -55,8 +35,7 @@ class Backtester(object):
         for dataset in self.data:
             for datapoint in dataset:
                 self._current_point = datapoint
-                self._equity_calc.new_price(get_time(datapoint),
-                  get_price(datapoint))
+                self._equity_calc.new_price(datapoint.timestamp, datapoint.C)
                 self.strategy.process_datapoint(datapoint)
             self.strategy.finalize()
             self._equity_calc.merge()
@@ -74,8 +53,8 @@ class Backtester(object):
         cp = self._current_point
         if price > cp.H or price < cp.L:
             self.log.error('requested trade price %s is not available '\
-                           'in current bar (H %s, L %s, C %s)', price,
-                           cp.H, cp.L, cp.C)
+                           'in bar %s (H %s L %s)', price, cp.timestamp,
+                           cp.H, cp.L)
         self._equity_calc.new_trade(timestamp, price, volume, direction)
 
 
