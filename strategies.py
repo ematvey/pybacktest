@@ -35,14 +35,9 @@ class Strategy(object):
             reset indicators, etc."""
         raise NotImplementedError
 
-    def order(self, timestamp, limit_price, volume, direction=None):
+    def order(self, timestamp, limit_price, volume):
         """ Send order method. """
-        if not direction:
-            if volume > 0:
-                direction = 'buy'
-            elif volume < 0:
-                direction = 'sell'
-        order = (timestamp, limit_price, abs(volume), direction)
+        order = (timestamp, limit_price, volume)
         self.orders.append(order)
         self.log.debug('sent order %s', order)
         self.order_callback(order)

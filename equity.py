@@ -31,11 +31,7 @@ class EquityCalculator(object):
         self.price = price
         self._full_curve.add_point(timestamp, self.var + self.pos * price)
 
-    def new_trade(self, timestamp, price, volume, direction):
-        self.log.debug('trade %s, price %s, volume %s, dir %s' % \
-          (timestamp, price, volume, direction))
-        if direction == 'sell':
-            volume *= -1
+    def new_trade(self, timestamp, price, volume):
         self.var -= price * volume
         self.pos += volume
         equity = self.var + self.pos * price
