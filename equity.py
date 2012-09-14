@@ -96,7 +96,7 @@ class EquityCurve(object):
         ''' Add trade. Not used in any computation currently. '''
         if volume != 0:
             if timestamp in self.trades:
-                self.log.warning("trade with timestamp %s is already present,"\
+                self.log.debug("trade with timestamp %s is already present,"\
                                  " incrementing timestamp by 1 mcs" % timestamp)
                 self.add_trade(timestamp + datetime.timedelta(0, 0, 1),
                                price, volume)
