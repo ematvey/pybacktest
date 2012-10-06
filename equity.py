@@ -106,19 +106,29 @@ class EquityCurve(object):
             self.log.warning("trade with 0 volume: %s %s %s", timestamp, 
                              price, volume)
 
-    def series(self, mode='equity'):
+    def series(self, mode='equity', frequency=None):
         ''' Pandas TimeSeries object of equity/changes.
         * `mode` determines type, could be "equity" for cumulative equity
            dynamic or "changes" for time series of changes between neighbour
-           equity points. '''
-        if mode == 'equity':
-            return pandas.TimeSeries(data=numpy.cumsum(self._changes),
-              index=self._times)
-        elif mode == 'changes':
-            return pandas.TimeSeries(data=self._changes, index=self._times)
+           equity points.
+        * `frequency` is pandas-compatible object for frequency conversions
+           (e.g. "D" for daily, "M" for monthly, "5min" for obvious. '''
+        if not frequency:
+            if mode == 'equity':
+                return pandas.TimeSeries(data=numpy.cumsum(self._changes),
+                                         index=self._times)
+            elif mode == 'changes':
+                return pandas.TimeSeries(data=self._changes, index=self._times)
         else:
-            raise Exception('Unsupported mode requested during export '\
-              'into pandas.TimeSeries')
+            ts = pandas.TimeSeries(data=numpy.cumsum(self._changes),
+                   index=self._times).asfreq(frequency, method='ffill')
+            ts = ts - ts.shift(1)
+            ts = ts[ts!=0]
+            if mode == 'changes':
+                return ts
+            elif mode == 'equity':
+                return ts.cumsum()
+        raise Exception('Unsupported requirements (probably)')
 
     def __getitem__(self, stat, precision=2):
         ''' Calculate statistic `stat` on equity dynamics '''
