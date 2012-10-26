@@ -47,6 +47,9 @@ class Backtester(object):
             s.order_callback = self._matching_callback
             for datapoint in dataset:
                 self._current_point = datapoint
+                ### NOTE: datapoint is assumed to have `C` attr
+                ## change next string if your data is represented in other
+                ## way
                 self._equity_calc.new_price(datapoint.timestamp, datapoint.C)
                 s.process_datapoint(datapoint)
             s.finalize()
@@ -60,6 +63,8 @@ class Backtester(object):
         raise NotImplementedError
 
     def _trade(self, timestamp, price, volume):
+        ''' Accept trades trades from `_matching_callback` or other
+            matching engine. '''
         cp = self._current_point
         if price > cp.H or price < cp.L:
             self.log.error('requested trade price %s is not available '\
@@ -70,7 +75,7 @@ class Backtester(object):
 
 class SimpleBacktester(Backtester):
     ''' Backtester which assumes that it is possible to execute all orders
-        for their requested prices; thus, `limit_price` of orders should
+        at their requested prices; thus, `limit_price` of orders should
         account for expected slippage. '''
 
     def _matching_callback(self, order):

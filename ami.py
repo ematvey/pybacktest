@@ -1,9 +1,11 @@
 import csv
 import datetime
-from equity import EquityCurve
+from .equity import EquityCurve
 
 def equity_ami(filename):
-    ''' Parse AmiBroker's trade list into EquityCurve '''
+    ''' Parse AmiBroker's trade list into EquityCurve.
+    Tested on AmiBroker 5.50.
+    '''
     r = csv.reader(open(filename))
     h = r.next()
     di = h.index('Date')

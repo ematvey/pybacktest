@@ -1,8 +1,12 @@
-## Core classes for strategies
-## order format: (timestamp, limit_price, volume, direction)
+'''
+ Core classes for strategies
+ order format: (timestamp, limit_price, volume, direction)
+
+'''
 
 import logging
 LOGGING_LEVEL = logging.INFO
+
 
 class Strategy(object):
 

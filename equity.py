@@ -12,7 +12,9 @@ class TradeError(Exception):
 
 
 class EquityCalculator(object):
-    ''' Calculates EquityCurve from trades and price changes '''
+    ''' Calculates EquityCurve from trades and price changes.
+        The idea is to keep track of equity changes on trade and on every price
+        change separately. '''
 
     def __init__(self, full_curve=None, trades_curve=None, log_level=None):
         self._full_curve = full_curve or EquityCurve()
@@ -27,11 +29,15 @@ class EquityCalculator(object):
         self.log.setLevel(log_level or LOGGING_LEVEL)
 
     def new_price(self, timestamp, price):
+        ''' Account for a new price.
+            Call this every time an information about tested asset's price changes. '''
         self.now = timestamp
         self.price = price
         self._full_curve.add_point(timestamp, self.var + self.pos * price)
 
     def new_trade(self, timestamp, price, volume):
+        ''' Account for a new trade.
+            Call this every time strategy makes a trade. '''
         self.var -= price * volume
         self.pos += volume
         equity = self.var + self.pos * price
@@ -56,12 +62,16 @@ class EquityCalculator(object):
 
     @property
     def full_curve(self):
+        ''' Return full equity curve (i.e. curve that tracked equity changes on
+            every price change, even between the trades). '''
         if not len(self._full_curve) == 0:
             self.merge()
         return self._full_curve_merged
 
     @property
     def trades_curve(self):
+        ''' Return trades equity curve (i.e. curve that tracked equity changes
+            only on trades. '''
         if not len(self._trades_curve) == 0:
             self.merge()
         return self._trades_curve_merged
@@ -111,8 +121,8 @@ class EquityCurve(object):
         * `mode` determines type, could be "equity" for cumulative equity
            dynamic or "changes" for time series of changes between neighbour
            equity points.
-        * `frequency` is pandas-compatible object for frequency conversions
-           (e.g. "D" for daily, "M" for monthly, "5min" for obvious. '''
+        * `frequency` is pandas-compatible object for frequency conversions.
+           (e.g. "D" for daily, "M" for monthly, "5min" for obvious.) '''
         if not frequency:
             if mode == 'equity':
                 return pandas.TimeSeries(data=numpy.cumsum(self._changes),
