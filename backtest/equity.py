@@ -151,7 +151,10 @@ class EquityCurve(object):
         s = stat.lower()
         func = getattr(performance_statistics, stat.lower(), None)
         if func:
-            return round(func(numpy.array(self._changes)), precision)
+            stat = func(numpy.array(self._changes))
+            if isinstance(stat, float):
+                stat = round(stat, precision)
+            return stat
         else:
             raise KeyError('Cannot calculate statistic with name `%s`', stat)
 
