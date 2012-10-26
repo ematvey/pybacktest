@@ -10,7 +10,7 @@ class Datapoint(dict):
     _base_fields = ('O', 'H', 'L', 'C', 'V')
     _readonly_fields = ('Date', 'Time', 'date', 'time', 'TS', 'ts')
     _fields = ('O', 'H', 'L', 'C', 'V', 'timestamp', 'contract')
-    _repr_fields = base_fields
+    _repr_fields = _base_fields
     
     def __init__(self, **kwargs):
         [setattr(self, k, v) for k, v in kwargs.iteritems() if k in fields]
