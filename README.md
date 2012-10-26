@@ -13,6 +13,9 @@ Simply clone and import root folder.
  * E-ratio entry analysis
  * Generate equity curve class from AmiBroker's tradelist
 
+## Examples
+Run `python test.py` to backtest simple MA crossover strategy. You might have to install some dependencies.
+
 ## Basic workflow
 ### Simple backtest
 You will need a dataset, represented as iterable over datapoints, or iterable over iterables over datapoints (i.e. list of lists of bars, like in future chain). Datapoint could be any format you desire, but current implementation assumes that datapoints at least have attribute `C` for close price. Easy to change that though.
@@ -22,8 +25,6 @@ Next, implement your trading strategy. This could be inheriting PositionalStrate
 When you're ready, create SimpleBacktester object with your dataset and strategy class object as arguments (you can pass args and kwargs for strategy instantiation too). Backtester will run automatically.
 
 After it is finished equity curves will be in `full_curve`, `trades_curve` attributes.
-
-Examples will be provided later.
 
 ### Multi-asses backtest
 This requires a bit more tinkering but basically you will need to:
