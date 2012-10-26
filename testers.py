@@ -12,6 +12,8 @@ class Backtester(object):
                  strategy_args=tuple(), strategy_kwargs=dict(),
                  run=True, log_level=None):
         '''
+        Arguments
+        ----
         * `strategy` should be Strategy class, i.e. has
             `process_datapoint` method that accepts datapoints and abstract
             `order_callback` method that accepts (contract, timestamp,
@@ -20,14 +22,21 @@ class Backtester(object):
         * `strategy_args`, `strategy_kwargs` - arguments for Strategy
             instantiation, specific for each strategy.
 
-        * `data` should be DataContainer-compatible object, i.e. should be
-            an iterable that generates datapoints (assumed to be bar or tick
-            objects).
+        * `data` should be ab iterable over datapoints or over iterables over
+            datapoints (in case you're doing portfolio testing, e.g. on futures
+            chain.
+
+        Important attributes
+        ----
+        `full_curve` is an EquityCurve that tracks equity changes on every
+            datapoint.
+        `trades_curve` is an EquityCurve that tracks equity changes only on
+            trades.
         '''
         self.strategy_class = strategy_class
         self.strategy_args = strategy_args
         self.strategy_kwargs = strategy_kwargs
-        self.data = data
+        self.data = data if hasattr(data[0], '__iter__') else [data]
         self.trades = []
         self.log = logging.getLogger(self.__class__.__name__)
         self.log_level = log_level or LOGGING_LEVEL

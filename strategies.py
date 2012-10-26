@@ -78,7 +78,9 @@ class PositionalStrategy(Strategy):
         return self.positions[-1][2]
 
     def process_datapoint(self, datapoint):
-        ''' Accept `datapoint` and prepare to execute next `step`. '''
+        ''' Accept `datapoint` and prepare to execute next `step`.
+            Datapoint is assumed to be OHLC bar with associated timestamp
+            in corresponding attributes. '''
         timestamp = datapoint.timestamp
         if self._current_point and self._current_point.timestamp.date() != \
           timestamp.date():
