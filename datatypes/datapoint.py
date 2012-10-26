@@ -3,21 +3,21 @@
 import datetime
 from decimal import Decimal
 
-base_fields = ('O', 'H', 'L', 'C', 'V')
-readonly_fields = ('Date', 'Time', 'date', 'time', 'TS', 'ts')
-fields = ('O', 'H', 'L', 'C', 'V', 'timestamp', 'contract')
-repr_fields = base_fields
-
 
 class Datapoint(dict):
     ''' Market datapoint (e.g. tick or bar) '''
+
+    _base_fields = ('O', 'H', 'L', 'C', 'V')
+    _readonly_fields = ('Date', 'Time', 'date', 'time', 'TS', 'ts')
+    _fields = ('O', 'H', 'L', 'C', 'V', 'timestamp', 'contract')
+    _repr_fields = base_fields
     
     def __init__(self, **kwargs):
         [setattr(self, k, v) for k, v in kwargs.iteritems() if k in fields]
     
     def __reprstring(self):
         s = ''
-        for f in repr_fields:
+        for f in self._repr_fields:
             if hasattr(self, f):
                 if len(s) != 0:
                     s += ' / '
@@ -25,7 +25,7 @@ class Datapoint(dict):
         return s
     
     def __repr__(self):
-        return '<(%s)  %s>' % (self.timestamp, self.__reprstring())
+        return '<bar (%s) %s>' % (self.timestamp, self.__reprstring())
     
     def __getattr__(self, name):
         try:
@@ -34,14 +34,14 @@ class Datapoint(dict):
             raise AttributeError(e)
     
     def __setattr__(self, name, value):
-        if not name in readonly_fields:
+        if not name in self._readonly_fields:
             self[name] = value
         else:
             raise Exception("Attribute '%s' is read-only." % name)
             
     @property
     def fields(self):
-        return [f for f in fields if hasattr(self, f)]
+        return [f for f in self._fields if hasattr(self, f)]
     
     @property
     def Date(self):
