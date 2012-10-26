@@ -26,7 +26,7 @@ When you're ready, create SimpleBacktester object with your dataset and strategy
 
 After it is finished equity curves will be in `full_curve`, `trades_curve` attributes.
 
-### Multi-asses backtest
+### Multi-asset backtest
 This requires a bit more tinkering but basically you will need to:
 
  * Override backtester by making separate EquityCalculator for every asset, changing `_trade` and `_matching_callback`
