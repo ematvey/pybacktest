@@ -10,7 +10,7 @@ repr_fields = base_fields
 
 
 class Datapoint(dict):
-    """ Echo market data point """
+    ''' Market datapoint (e.g. tick or bar) '''
     
     def __init__(self, **kwargs):
         [setattr(self, k, v) for k, v in kwargs.iteritems() if k in fields]
