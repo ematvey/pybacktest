@@ -30,7 +30,8 @@ class EquityCalculator(object):
 
     def new_price(self, timestamp, price):
         ''' Account for a new price.
-            Call this every time an information about tested asset's price changes. '''
+            Call this every time an information about tested asset's
+            price changes. '''
         self.now = timestamp
         self.price = price
         self._full_curve.add_point(timestamp, self.var + self.pos * price)
@@ -43,7 +44,8 @@ class EquityCalculator(object):
         equity = self.var + self.pos * price
         diff = equity - sum(self._trades_curve._changes)
         if diff != 0:
-            self.log.debug('new equity point %s registered on %s', equity, timestamp)
+            self.log.debug('new equity point %s registered on %s', equity,
+                           timestamp)
             self.log.debug('equity change: %s', diff)
         self._trades_curve.add_point(timestamp, equity)
         self._trades_curve.add_trade(timestamp, price, volume)
@@ -106,14 +108,15 @@ class EquityCurve(object):
         ''' Add trade. Not used in any computation currently. '''
         if volume != 0:
             if timestamp in self.trades:
-                self.log.debug("trade with timestamp %s is already present,"\
-                                 " incrementing timestamp by 1 mcs" % timestamp)
+                self.log.debug("trade with timestamp %s is already present,"
+                               " incrementing timestamp by 1 mcs" %
+                               timestamp)
                 self.add_trade(timestamp + datetime.timedelta(0, 0, 1),
                                price, volume)
             else:
                 self.trades[timestamp] = (price, volume)
         else:
-            self.log.warning("trade with 0 volume: %s %s %s", timestamp, 
+            self.log.warning("trade with 0 volume: %s %s %s", timestamp,
                              price, volume)
 
     def series(self, mode='equity', frequency=None):
@@ -131,9 +134,10 @@ class EquityCurve(object):
                 return pandas.TimeSeries(data=self._changes, index=self._times)
         else:
             ts = pandas.TimeSeries(data=numpy.cumsum(self._changes),
-                   index=self._times).asfreq(frequency, method='ffill')
+                                   index=self._times).asfreq(frequency,
+                                                             method='ffill')
             ts = ts - ts.shift(1)
-            ts = ts[ts!=0]
+            ts = ts[ts != 0]
             if mode == 'changes':
                 return ts
             elif mode == 'equity':
@@ -170,7 +174,7 @@ class EquityCurve(object):
         changes2 = curve._changes
         times1 = self._times
         times2 = curve._times
-        if len(changes1)==0:
+        if len(changes1) == 0:
             if overwrite:
                 self._changes = curve._changes
                 self._times = curve._times
@@ -178,25 +182,25 @@ class EquityCurve(object):
                 return
             else:
                 return curve
-        if len(changes2)==0:
+        if len(changes2) == 0:
             return self * overwrite or None
         i = j = 0
         changes = []
         times = []
         while i < len(changes1) or j < len(changes2):
             if i < len(changes1) and j < len(changes2) and \
-              times1[i] == times2[j]:
+                    times1[i] == times2[j]:
                 times.append(times1[i])
                 changes.append(changes1[i] + changes2[j])
                 i += 1
                 j += 1
             elif j >= len(changes2) or i < len(changes1) and \
-              times1[i] < times2[j]:
+                    times1[i] < times2[j]:
                 times.append(times1[i])
                 changes.append(changes1[i])
                 i += 1
             elif i >= len(changes1) or j < len(changes2) and \
-              times1[i] > times2[j]:
+                    times1[i] > times2[j]:
                 times.append(times2[j])
                 changes.append(changes2[j])
                 j += 1
@@ -210,9 +214,9 @@ class EquityCurve(object):
                 elif len(curve.trades) != 0:
                     for time in curve.trades.keys():
                         if time in self.trades:
-                            raise Exception("EquityCurve merge error: "\
-                                             "attempting to merge a trade "\
-                                             "with non-unique timestamp")
+                            raise Exception("EquityCurve merge error: "
+                                            "attempting to merge a trade "
+                                            "with non-unique timestamp")
                     self.trades.update(curve.trades)
         if overwrite:
             self._changes = changes

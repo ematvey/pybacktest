@@ -4,13 +4,13 @@ from itertools import chain
 
 
 class ERatioAnalyzer(object):
-    
+
     total_entries = 0
     entries = []
     finalized = []
     MAE = {}
     MFE = {}
-    
+
     def __init__(self, length, slippage=0, bars=True):
         self.length = length
         self.slip = slippage
@@ -18,13 +18,14 @@ class ERatioAnalyzer(object):
         for i in range(1, self.length):
             self.MAE[i] = []
             self.MFE[i] = []
-    
+
     def add_entry(self, price, direction):
         self.total_entries += 1
-        self.entries.append({'dir': direction, 
-            'price': price+self.slip if direction>0 else price-self.slip, 
-            'MFE': {0: 0}, 'MAE': {0: 0}, 'datapoints_passed': 1})
-    
+        self.entries.append(
+            {'dir': direction,
+             'price': price + self.slip if direction > 0 else price - self.slip,
+             'MFE': {0: 0}, 'MAE': {0: 0}, 'datapoints_passed': 1})
+
     def add_datapoint(self, point):
         for entry in self.entries:
             i = entry['datapoints_passed']
@@ -45,7 +46,7 @@ class ERatioAnalyzer(object):
                 entry['MFE'][i] = max(entry['price'] - L, entry['MFE'][i-1])
                 entry['MAE'][i] = max(H - entry['price'], entry['MAE'][i-1])
             entry['datapoints_passed'] += 1
-            
+
     def finalize(self):
         for entry in chain(self.finalized, self.entries):
             for i in range(1, self.length):
@@ -56,7 +57,7 @@ class ERatioAnalyzer(object):
                                        float(entry['price']))
         self.finalized = []
         self.entries = []
-        
+
     def plot(self, median=False, show=True, extra_text=None):
         MAE = self.MAE
         MFE = self.MFE
@@ -86,7 +87,7 @@ class ERatioAnalyzer(object):
             plot.plot(times, ERatio_median, 'r:')
         if show:
             plt.show()
-    
+
     def show(self):
         plt.show()
 
@@ -96,7 +97,7 @@ class EntryTester(object):
 
     def __init__(self, strategy, bars, length=100, skip_first_bar=True):
         '''
-        * `strategy` - strategy object. Strategy is assumed to have `step` method accepting
+        * `strategy` - EntryStrategy object. EntryStrategy is assumed to have `step` method accepting
             datapoints and abstract `entry_callback` method which it feeds with entries of
             (price, volume) format.
         '''
