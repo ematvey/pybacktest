@@ -23,4 +23,4 @@ except:
 
 cc = bt.trades_curve
 
-IPython.embed(banner1='trades equity curve stored in `cc`. `cc.series().plot(); plt.show` to plot equity')
+IPython.embed(banner1='trades equity curve stored in `cc`. `cc.series().plot(); plt.show()` to plot equity')
