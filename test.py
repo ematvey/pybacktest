@@ -19,7 +19,7 @@ try:
     import pprint
     pprint.pprint(bt.trades_curve.statistics())
 except:
-    bt.trades_curve.statistics()
+    print bt.trades_curve.statistics()
 
 cc = bt.trades_curve
 
