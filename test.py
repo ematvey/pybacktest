@@ -4,6 +4,7 @@ import datetime
 import matplotlib.pyplot as plt
 import IPython
 import logging
+
 logging.basicConfig()
 LOGGING_LEVEL = logging.DEBUG
 
