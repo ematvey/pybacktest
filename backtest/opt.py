@@ -80,9 +80,8 @@ class Optimizer(object):
             c += 1
 
     def plot1d(self, stat=None, param=None, show=True):
-        ''' 1-d plot of optimization results. If nothing was passed, will
-            attempt to plot first param in self.param_names against first
-            statistic in results. '''
+        ''' 1-d plot of optimization results. Both `stat` and `param` defaults
+            to first item from corresponding place. '''
         if not param:
             param = self.param_names[0]
         if not stat:
