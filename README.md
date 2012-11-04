@@ -14,7 +14,7 @@ Simply clone and import modules as you need them. To get a sense of things study
  * Generate equity curve class from AmiBroker's tradelist
 
 ## Examples
-Run `python test.py` to backtest simple MA crossover strategy. You might have to install some dependencies.
+Run `python test.py` to backtest simple MA crossover strategy or `python test_opt.py` to to try optimization. You might have to install some dependencies.
 
 ## Basic workflow
 ### Simple backtest
