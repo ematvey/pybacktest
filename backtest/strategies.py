@@ -122,8 +122,8 @@ class PositionalStrategy(Strategy):
             if timestamp != point.timestamp:
                 self.log.warning('order timestamp %s is not current '\
                                  'timestamp %s' ,timestamp, point.timestamp)
-            if self._first_timestamp == timestamp:
-                self.log.warning('position change on the openning of a day')
+            #if self._first_timestamp == timestamp:
+            #    self.log.warning('position change on the openning of a day')
         ## calculating price
         if price == 'close':
             limit_price = point.C

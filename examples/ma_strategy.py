@@ -3,12 +3,14 @@ from backtest.strategies import PositionalStrategy
 
 
 class MACrossoverStrategy(PositionalStrategy):
-
-    slow_period = 30
-    fast_period = 10
     ma_slow = []
     ma_fast = []
     closes = []
+
+    def __init__(self, fast_period=10, slow_period=30, *args, **kwargs):
+        super(MACrossoverStrategy, self).__init__(*args, **kwargs)
+        self.slow_period = slow_period
+        self.fast_period = fast_period
 
     @property
     def ma_cross(self):

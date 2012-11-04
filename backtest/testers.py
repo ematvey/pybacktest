@@ -50,7 +50,7 @@ class Backtester(object):
     def run(self):
         self.log.info('backtest started')
         for dataset in self.data:
-            s = self.strategy_class(log_level=self.log_level,
+            s = self.strategy_class(#log_level=self.log_level,
                                     *self.strategy_args,
                                     **self.strategy_kwargs)
             s.order_callback = self._matching_callback
