@@ -50,15 +50,19 @@ class EquityCalculator(object):
         self._trades_curve.add_point(timestamp, equity)
         self._trades_curve.add_trade(timestamp, price, volume)
 
-    def merge(self):
+    def merge(self, record_trades=True):
         ''' Record current results and prepare to start calculating equity
             from the scratch. Purpose: to be able to backtest single strategy
             on a whole basket of instruments. '''
         if self.pos != 0:
             raise Exception('Merge requested when position != 0')
-        self._full_curve_merged.merge(self._full_curve)
+        self._full_curve_merged.merge(self._full_curve,
+                keep_trades=(len(self._full_curve_merged) == 0 or
+                             len(self._full_curve) == 0))
         self._full_curve = EquityCurve()
-        self._trades_curve_merged.merge(self._trades_curve)
+        self._trades_curve_merged.merge(self._trades_curve,
+                keep_trades=(len(self._trades_curve_merged) == 0 or
+                             len(self._trades_curve) == 0))
         self._trades_curve = EquityCurve()
         self.var = 0
 
@@ -168,11 +172,12 @@ class EquityCurve(object):
         else:
             raise Exception('Unsupported `mode` of statistics request')
 
-    def merge(self, curve, overwrite=True):
-        ''' Merge two curves. Used for backet testing. Will overwrite self
-            unless `overwrite` was set to False.
-            Warning: recorded trades will be discarded for self to avoid
-            potential confusion. '''
+    def merge(self, curve, overwrite=True, keep_trades=False):
+        ''' Merge two curves. Used for basket testing.
+            Will overwrite self unless `overwrite` was set to False.
+            Set `keep_trades` to True if you want to try to keep recorded trades
+            (could be problematic since they are supposedly two different
+            instruments.'''
         changes1 = self._changes
         changes2 = curve._changes
         times1 = self._times
@@ -209,25 +214,31 @@ class EquityCurve(object):
                 j += 1
             else:
                 raise Exception("EquityCurve merge error")
-        trades = self.trades.copy()
-        if hasattr(self, 'trades'):
-            if len(curve.trades) != 0:
-                if len(trades) == 0:
-                    trades = curve.trades
-                elif len(curve.trades) != 0:
-                    for time in curve.trades.keys():
-                        if time in self.trades:
-                            raise Exception("EquityCurve merge error: "
-                                            "attempting to merge a trade "
-                                            "with non-unique timestamp")
-                    self.trades.update(curve.trades)
+        if keep_trades:
+            trades = self.trades.copy()
+            if hasattr(self, 'trades'):
+                if len(curve.trades) != 0:
+                    if len(trades) == 0:
+                        trades = curve.trades
+                    elif len(curve.trades) != 0:
+                        for time in curve.trades.keys():
+                            if time in self.trades:
+                                raise Exception("EquityCurve merge error: "
+                                                "attempting to merge a trade "
+                                                "with non-unique timestamp")
+                        self.trades.update(curve.trades)
         if overwrite:
             self._changes = changes
             self._times = times
-            self.trades = trades
+            if keep_trades:
+                self.trades = trades
+            else:
+                if hasattr(self, 'trades'):
+                    del self.trades
         else:
             eq = EquityCurve()
             eq._changes = changes
             eq._times = times
-            eq.trades = trades
+            if keep_trades:
+                eq.trades = trades
             return eq
