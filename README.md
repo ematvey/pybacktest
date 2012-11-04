@@ -2,10 +2,10 @@
 Compact framework for backtesting trading strategies.
 
 ## Installation
-Simply clone and import root folder.
+Simply clone and import modules as you need them. To get a sense of things study test stripts in root folder. Setup via distutils will be added later.
 
 ## Features of this version
- * Ready-to-use one-asset backtesting
+ * Ready-to-use one-asset backtesting and optimizing
  * Not too hard to implement multi-asset backtesting
  * Full Equity calculation calculation with various performance statistics such as PF, Sharpe, Sortino, MC maximum drawdown estimate, etc
   * Export equity curve into pandas
@@ -25,6 +25,9 @@ Next, implement your trading strategy. This could be inheriting PositionalStrate
 When you're ready, create SimpleBacktester object with your dataset and strategy class object as arguments (you can pass args and kwargs for strategy instantiation too). Backtester will run automatically.
 
 After it is finished equity curves will be in `full_curve`, `trades_curve` attributes.
+
+### Optimization
+Optimization is performed via `Optimizer` class. Mostly it mirrors `Backtester`. Create instance by supplying backtester class, data and strategy class. Add optimization params via `add_opt_params` as usual (params will be supplied as kwargs in strategy's constructor). Finally, `run` optimizer with target statistics as argument. That's about it.
 
 ### Multi-asset backtest
 This requires a bit more tinkering but basically you will need to:
