@@ -1,5 +1,6 @@
 import logging
 import itertools
+import matplotlib.pyplot as plt
 
 
 def fxrange(start, end=None, inc=None):
@@ -77,3 +78,22 @@ class Optimizer(object):
             self.log.info('Optimization step %s completed: %s', c, results)
             self.opt_results[paramset] = results
             c += 1
+
+    def plot1d(self, stat=None, param=None, show=True):
+        ''' 1-d plot of optimization results. If nothing was passed, will
+            attempt to plot first param in self.param_names against first
+            statistic in results. '''
+        if not param:
+            param = self.param_names[0]
+        if not stat:
+            stat = self.opt_results.values()[0].keys()[0]
+        assert param in self.param_names, 'No opt results on param'
+        i = self.param_names.index(param)
+        results = [d[stat] for d in self.opt_results.values()]
+        param_values = [p[0] for p in self.opt_results.keys()]
+        plt.plot(param_values, results)
+        plt.xlabel(param or self.param_names[0])
+        plt.ylabel(stat)
+        plt.title('1d optimization plot')
+        if show:
+            plt.show()
