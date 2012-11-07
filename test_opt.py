@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-import pyaux
-pyaux.use_exc_ipdb()
-
 import datetime
 import matplotlib.pyplot as plt
 import IPython
