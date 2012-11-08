@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import IPython
 import logging
 
-logging.basicConfig(log_level=logging.DEBUG)
+logging.basicConfig()
 
 from backtest.testers import SimpleBacktester
 from examples.ma_strategy import MACrossoverStrategy as strategy
@@ -20,7 +20,7 @@ from datatypes.processing import read_bars
 
 bars = read_bars('examples/testdata/RIZ1.csv')
 
-bt = SimpleBacktester(bars, strategy)
+bt = SimpleBacktester(bars, strategy, log_level=logging.DEBUG)
 
 try:
     import pprint

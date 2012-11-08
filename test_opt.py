@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import IPython
 import logging
 
-logging.basicConfig(log_level=logging.DEBUG)
+logging.basicConfig()
 
 from backtest.testers import SimpleBacktester
 from backtest.opt import Optimizer
@@ -21,7 +21,7 @@ from datatypes.processing import read_bars
 
 bars = read_bars('examples/testdata/RIZ1.csv')
 
-opt = Optimizer(SimpleBacktester, bars, strategy)
+opt = Optimizer(SimpleBacktester, bars, strategy, log_level=logging.DEBUG)
 opt.add_opt_param('fast_period', 5, 20, 5)
 opt.add_opt_param('slow_period', 20, 50, 5)
 opt.run(('sharpe',))
