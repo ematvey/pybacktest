@@ -113,28 +113,15 @@ class PositionalStrategy(Strategy):
         a) single OHLC bar with associated timestamp in corresponding
         attributes, e.g. data = <bar>;
 
-        b) list-like, where first item is OHLC bar with timestamp, e.g.
-        data = [<bar>, <other_relevant_data>];
-
         c) dict, with instrument names in keys and OHCL-likes in values, e.g.
         data = {'S&P500': <bar>, 'EURUSD': <bar>}
 
-        d) dict, with instrument names in keys and list-likes in values,
-        with each list-like has OHCL-bar as first item, e.g.
-        data = {
-            'S&P500': [<bar>, <other_relevant_to_SP_data>],
-            'EURUSD': [<bar>, <other_relevant_to_eurusd_data>]
-            }
-
-        Using a) or b) assumes single-asset backtest, using c) or d) assumes
+        Using a) assumes single-asset backtest, using b) assumes
         multi-asset backtest.
 
         '''
         if not self.multi:
-            if hasattr(data, '__iter__'):
-                datapoint = data[0]
-            else:
-                datapoint = data
+            datapoint = data
             timestamp = datapoint.timestamp
             if self._current_point and self._current_point.timestamp.date() != \
                timestamp.date():
@@ -144,10 +131,7 @@ class PositionalStrategy(Strategy):
                 self.positions.append((timestamp, datapoint.C, 0))
         else:
             for k, v in data.iteritems():
-                if hasattr(v, '__iter__'):
-                    datapoint = data[0]
-                else:
-                    datapoint = data
+                datapoint = v
                 cp = self._current_point.setdefault(k, None)
                 self.positions.setdefault(
                     k, [(datapoint.timestamp, datapoint.C, 0)])
@@ -180,15 +164,15 @@ class PositionalStrategy(Strategy):
         `ignore_timecheck` allows you to bypass timestamp safechecks,
             i.e. when closing the trade on previous EOD from today's first bar.
         '''
-        assert instrument or not self.multi,
+        assert instrument or not self.multi, \
            'Changing position requires instrument when multi-backtesting'
-        point = self._current_point if not self.multi or \
+        point = self._current_point if not self.multi else \
                 self._current_point.get(instrument)
         if not point:
             raise 'Wrong instrument requested'
         timestamp = timestamp or point.timestamp
         slip = self.slippage
-        old_position = self.position if not self.multi or \
+        old_position = self.position if not self.multi else \
                        self.position[instrument]  # if we got here,
                                                   # position should be
                                                   # present
