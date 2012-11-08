@@ -5,8 +5,7 @@ Compact framework for backtesting trading strategies.
 Simply clone and import modules as you need them. To get a sense of things study test stripts in root folder. Setup via distutils will be added later.
 
 ## Features of this version
- * Ready-to-use one-asset backtesting and optimizing
- * Not too hard to implement multi-asset backtesting
+ * Ready-to-use one- and multi-asset backtesting and optimizing
  * Full Equity calculation calculation with various performance statistics such as PF, Sharpe, Sortino, MC maximum drawdown estimate, etc
   * Export equity curve into pandas
   * Easy to extend performance statistics set
@@ -30,13 +29,15 @@ After it is finished equity curves will be in `full_curve`, `trades_curve` attri
 Optimization is performed via `Optimizer` class. Mostly it mirrors `Backtester`. Create instance by supplying backtester class, data and strategy class. Add optimization params via `add_opt_params` as usual (params will be supplied as kwargs in strategy's constructor). Finally, `run` optimizer with target statistics as argument. That's about it.
 
 ### Multi-asset backtest
-This requires a bit more tinkering but basically you will need to:
+Backtesting in multi-asset mode is different from single-asset mode in only one aspect: you should supply dicts with instrument names in keys and corresponding datapoints in values. Goes without saying that you should write your strategies in a way so they expect dicts of datapoints instead of datapoints. Iterables over iterables over dicts are supported too.
 
- * Override backtester by making separate EquityCalculator for every asset, changing `_trade` and `_matching_callback`
- * Write your own Strategy class
- * After testing is complete, merge EquityCurves for individual asset into one final curve
+#### Data structure example
+Single-asset mode:
+`[datapoint1, datapoint2, ..., datapointN]`
 
-Native support for multi-asset backtesting will be implemented later.
+Multi-asset mode:
+`[{'instrument_1': datapoint1_i1, 'instrument_2': datapoint1_i2}, ...,
+   'instrument_1': datapointN_i1, 'instrument_2': datapointN_i2}]`
 
 ## API
 See docstrings in code for documentation
