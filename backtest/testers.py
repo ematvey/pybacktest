@@ -60,7 +60,7 @@ class Backtester(object):
                 ## change next string if your data is represented in other
                 ## way
                 self._equity_calc.new_price(datapoint.timestamp, datapoint.C)
-                s.process_datapoint(datapoint)
+                s.process_data(datapoint)
             s.finalize()
             self._equity_calc.merge()
         self.log.info('backtest complete; results are in self.results')

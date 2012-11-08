@@ -23,32 +23,51 @@ class Strategy(object):
             the first `step`. """
         raise NotImplementedError
 
-    def process_datapoint(self, datapoint):
+    def process_data(self, data):
         """ Method for hiding all internal operations, (e.g. tracking prices).
             Backtester calls this before it calls `step`.
             Use `super` when overriding. """
-        self.step(datapoint)
+        self.step(data)
 
-    def step(self, datapoint):
+    def step(self, data):
         """ Main method, strategy decisions should start here.
-            Do not use `super` when overriding. """
+            Do not use `super` when overriding.
+            `data` could be any object - dict, tuple, list, singleton object -
+            just make sure that strategy knows what datatype to expect. """
         raise NotImplementedError
 
     def finalize(self):
         """ Finalize everything before close, i.e. shut down the position,
-            reset indicators, etc."""
+            reset indicators, etc. """
         raise NotImplementedError
 
-    def order(self, timestamp, limit_price, volume):
-        """ Send order method. """
-        order = (timestamp, limit_price, volume)
+    def order(self, timestamp, limit_price, volume, instrument=None):
+        """ Send order method. Optional `instrument` argument is
+            required if running multi-asset backtest. """
+        if instrument:
+            order = (timestamp, limit_price, volume, instrument)
+        else:
+            order = (timestamp, limit_price, volume)
         self.orders.append(order)
         self.log.debug('sent order %s', order)
         self.order_callback(order)
 
+
 class PositionalStrategy(Strategy):
     ''' PositionalStrategy will handle all order generation resulting from
-        changing its position via `change_posiiton` method. '''
+        changing its position via `change_posiiton` method.
+
+        Attribute `multi` will turn on multi-instrument backtesting if set to
+        true.
+            self.change_position, self.long, self.short, self.exit from now on
+            will require `instrument` argument set and self.position will return
+            dict of positions on all traded instruments. You dont need to set
+            List of positions explicitly, just `change_position` on them and it
+            will be recorded.
+    '''
+
+    multi = False  ## Set this to True if your strategy operates on a
+                   ## basket of instruments
 
     def __init__(self, name=None, volume=1.0, slippage=0., log_level=None):
         '''
@@ -63,35 +82,83 @@ class PositionalStrategy(Strategy):
             volume=2.5.
 
         And do not forget to call the constructor when overriding.
+
         '''
-        self.positions = []
+        self.positions = [] if not self.multi else {}
         self.volume = volume
         self.slippage = slippage
-        self._current_point = None
-        self._first_timestamp = None
+        if not self.multi:
+            self._current_point = None
+            self._first_timestamp = None
+        else:
+            self._current_point = {}
+            self._first_timestamp = {}
         self._price_overrides = 0
         super(PositionalStrategy, self).__init__(name, log_level)
 
     @property
     def position(self):
-        ''' Current position. Always in range [-1, 1]. '''
-        return self.positions[-1][2]
+        ''' Current position(s). Always in range [-1, 1]. '''
+        if not self.multi:
+            return self.positions[-1][2]
+        else:
+            return dict([(k, v[-1][2]) for k, v in self.positions.iteritems()])
 
-    def process_datapoint(self, datapoint):
-        ''' Accept `datapoint` and prepare to execute next `step`.
-            Datapoint is assumed to be OHLC bar with associated timestamp
-            in corresponding attributes. '''
-        timestamp = datapoint.timestamp
-        if self._current_point and self._current_point.timestamp.date() != \
-          timestamp.date():
-            self._first_timestamp = timestamp
-        self._current_point = datapoint
-        if len(self.positions) == 0: # initialize position at 0
-            self.positions.append((timestamp, datapoint.C, 0))
-        super(PositionalStrategy, self).process_datapoint(datapoint)
+    def process_data(self, data):
+        '''
+        Process `data` and prepare to execute next `step`.
 
-    def change_position(self, position, price='close', defaulting='open',
-                        timestamp=None, ignore_timecheck=False):
+        `data` is assumed to be one of the following:
+
+        a) single OHLC bar with associated timestamp in corresponding
+        attributes, e.g. data = <bar>;
+
+        b) list-like, where first item is OHLC bar with timestamp, e.g.
+        data = [<bar>, <other_relevant_data>];
+
+        c) dict, with instrument names in keys and OHCL-likes in values, e.g.
+        data = {'S&P500': <bar>, 'EURUSD': <bar>}
+
+        d) dict, with instrument names in keys and list-likes in values,
+        with each list-like has OHCL-bar as first item, e.g.
+        data = {
+            'S&P500': [<bar>, <other_relevant_to_SP_data>],
+            'EURUSD': [<bar>, <other_relevant_to_eurusd_data>]
+            }
+
+        Using a) or b) assumes single-asset backtest, using c) or d) assumes
+        multi-asset backtest.
+
+        '''
+        if not self.multi:
+            if hasattr(data, '__iter__'):
+                datapoint = data[0]
+            else:
+                datapoint = data
+            timestamp = datapoint.timestamp
+            if self._current_point and self._current_point.timestamp.date() != \
+               timestamp.date():
+                self._first_timestamp = timestamp
+            self._current_point = datapoint
+            if len(self.positions) == 0: # initialize position at 0
+                self.positions.append((timestamp, datapoint.C, 0))
+        else:
+            for k, v in data.iteritems():
+                if hasattr(v, '__iter__'):
+                    datapoint = data[0]
+                else:
+                    datapoint = data
+                cp = self._current_point.setdefault(k, None)
+                self.positions.setdefault(
+                    k, [(datapoint.timestamp, datapoint.C, 0)])
+                if cp and cp.timestamp.date() != datapoint.timestamp.date():
+                    self._first_timestamp[k] = datapoint.timestamp
+                self._current_point[k] = datapoint
+        super(PositionalStrategy, self).process_data(data)
+
+    def change_position(self, position, instrument=None, price='close',
+                        defaulting='open', timestamp=None,
+                        ignore_timecheck=False):
         '''
         Change position of strategy, which is the main way to initiate
         trades.
@@ -113,10 +180,18 @@ class PositionalStrategy(Strategy):
         `ignore_timecheck` allows you to bypass timestamp safechecks,
             i.e. when closing the trade on previous EOD from today's first bar.
         '''
-        point = self._current_point
+        assert instrument or not self.multi,
+           'Changing position requires instrument when multi-backtesting'
+        point = self._current_point if not self.multi or \
+                self._current_point.get(instrument)
+        if not point:
+            raise 'Wrong instrument requested'
         timestamp = timestamp or point.timestamp
         slip = self.slippage
-        old_position = self.position
+        old_position = self.position if not self.multi or \
+                       self.position[instrument]  # if we got here,
+                                                  # position should be
+                                                  # present
         volume = position - old_position
         if not ignore_timecheck:
             if timestamp != point.timestamp:
@@ -150,14 +225,17 @@ class PositionalStrategy(Strategy):
         else:
             raise Exception('requested price %s cannot be accepted' % price)
         ## executing
-        self.positions.append((timestamp, limit_price, position))
+        if self.multi:
+            self.positions.append((timestamp, limit_price, position))
+        else:
+            self.positions.append((timestamp, limit_price, position, instrument))
         if volume > 0:
             limit_price += slip
         elif volume < 0:
             limit_price -= slip
         self.log.debug('position change from %s to %s' % (old_position,
           position))
-        self.order(timestamp, limit_price, volume)
+        self.order(timestamp, limit_price, volume, instrument)
 
     def finalize(self):
         self.log.debug('finalization requested')
