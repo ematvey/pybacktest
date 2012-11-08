@@ -1,3 +1,4 @@
+import matplotlib.pyplot
 import numpy
 import pandas
 import datetime
@@ -84,6 +85,8 @@ class EquityCalculator(object):
 class EquityCurve(object):
     ''' Keeps history of equity changes and calculates various performance
         statistics. Optional: keeps track of trades. '''
+
+    plt = matplotlib.pyplot
 
     def __init__(self):
         self._changes = list()
