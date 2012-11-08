@@ -9,7 +9,7 @@ class Backtester(object):
 
     def __init__(self, data, strategy_class,
                  strategy_args=tuple(), strategy_kwargs=dict(),
-                 run=True):
+                 run=True, log_level=None):
         '''
         Arguments
         ----
@@ -58,9 +58,12 @@ class Backtester(object):
         self.strategy_class = strategy_class
         self.strategy_args = strategy_args
         self.strategy_kwargs = strategy_kwargs
-        self.data = data if hasattr(data[0], '__iter__') and not isinstance(data[0], dict) else [data]
-        self.multi = True if isinstance(self.data[0][0], dict) else False
+        self.data = data if hasattr(data[0], '__iter__') and not type(data[0]) == dict else [data]
+        self.multi = True if type(self.data[0][0]) == dict else False
         self.log = logging.getLogger(self.__class__.__name__)
+        if log_level:
+            self.log.setLevel(log_level)
+        self.log_level = log_level
         if not self.multi:
             calc = self._equity = equity.EquityCalculator()
             self._current_point = None
@@ -69,8 +72,8 @@ class Backtester(object):
         else:
             self._equity = {}
             self._current_point = {}
-            self.full_curve = equity.EquityCurve()
-            self.trades_curve = equity.EquityCurve()
+            self.full_curve = equity.EquityCurve(log_level=self.log_level)
+            self.trades_curve = equity.EquityCurve(log_level=self.log_level)
         if run:
             self.run()
 
@@ -78,7 +81,8 @@ class Backtester(object):
         self.log.info('backtest started')
         self.log.info('%s-asset mode', 'single' if self.multi else 'multi')
         for dataset in self.data:
-            s = self.strategy_class(*self.strategy_args,
+            s = self.strategy_class(log_level=self.log_level,
+                                    *self.strategy_args,
                                     **self.strategy_kwargs)
             #assert s.multi == self.multi, \
             #    'strategy and backtester have different asset modes'
@@ -103,9 +107,10 @@ class Backtester(object):
             else:
                 for e in self._equity.values():
                     e.merge()
-        for e in self._equity.values():
-            self.trades_curve.merge(e.trades_curve)
-            self.full_curve.merge(e.full_curve)
+        if self.multi:
+            for e in self._equity.values():
+                self.trades_curve.merge(e.trades_curve)
+                self.full_curve.merge(e.full_curve)
         self.log.info('backtest complete')
         self.log.info('see `trades_curve`, `full_curve` for aggregated curves')
         if self.multi:

@@ -27,14 +27,12 @@ class Optimizer(object):
     '''
 
     def __init__(self, backtester_class, data, strategy_class,
-                 strategy_args=tuple(), strategy_kwargs=dict(),
-                 log_level=None):
+                 strategy_args=tuple(), strategy_kwargs=dict()):
         ''' Supply target Backtester class as `backtester_class`.
             For other arguments' description refer to Backtester docstrings.
             NOTE: `data` could not be generator any more.
         '''
         self.log = logging.getLogger(self.__class__.__name__)
-        self.log.setLevel(log_level or logging.INFO)
         self.backtester_class = backtester_class
         self.data = data
         self.strategy_class = strategy_class

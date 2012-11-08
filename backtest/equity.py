@@ -16,16 +16,19 @@ class EquityCalculator(object):
         The idea is to keep track of equity changes on trade and on every price
         change separately. '''
 
-    def __init__(self, full_curve=None, trades_curve=None):
-        self._full_curve = full_curve or EquityCurve()
-        self._trades_curve = trades_curve or EquityCurve()
-        self._full_curve_merged = EquityCurve()
-        self._trades_curve_merged = EquityCurve()
+    def __init__(self, full_curve=None, trades_curve=None, log_level=None):
+        self._full_curve = full_curve or EquityCurve(log_level=log_level)
+        self._trades_curve = trades_curve or EquityCurve(log_level=log_level)
+        self._full_curve_merged = EquityCurve(log_level=log_level)
+        self._trades_curve_merged = EquityCurve(log_level=log_level)
         self.pos = 0
         self.var = 0
         self.now = None
         self.price = None
         self.log = logging.getLogger(self.__class__.__name__)
+        if log_level:
+            self.log.setLevel(log_level)
+        self.log_level = log_level
 
     def new_price(self, timestamp, price):
         ''' Account for a new price.
@@ -58,11 +61,11 @@ class EquityCalculator(object):
         self._full_curve_merged.merge(self._full_curve,
                 keep_trades=(len(self._full_curve_merged) == 0 or
                              len(self._full_curve) == 0))
-        self._full_curve = EquityCurve()
+        self._full_curve = EquityCurve(log_level=self.log_level)
         self._trades_curve_merged.merge(self._trades_curve,
                 keep_trades=(len(self._trades_curve_merged) == 0 or
                              len(self._trades_curve) == 0))
-        self._trades_curve = EquityCurve()
+        self._trades_curve = EquityCurve(log_level=self.log_level)
         self.var = 0
 
     @property
@@ -88,12 +91,15 @@ class EquityCurve(object):
 
     plt = matplotlib.pyplot
 
-    def __init__(self):
+    def __init__(self, log_level=None):
         self._changes = list()
         self._times = list()
         self._cumsum = 0
         self.trades = dict()
         self.log = logging.getLogger(self.__class__.__name__)
+        if log_level:
+            self.log.setLevel(log_level)
+        self.log_level = log_level
 
     def __len__(self):
         return len(self._changes)
@@ -236,7 +242,7 @@ class EquityCurve(object):
                 if hasattr(self, 'trades'):
                     del self.trades
         else:
-            eq = EquityCurve()
+            eq = EquityCurve(log_level=self.log_level)
             eq._changes = changes
             eq._times = times
             if keep_trades:

@@ -16,7 +16,9 @@ class Strategy(object):
             name = self.__class__.__name__
         self.name = name
         self.log = logging.getLogger(self.name)
-        self.log.setLevel(log_level or LOGGING_LEVEL)
+        if log_level:
+            self.log.setLevel(log_level)
+        self.log_level = log_level
 
     def order_callback(self, order):
         """ Order callback should be set by backtester before
@@ -68,7 +70,7 @@ class PositionalStrategy(Strategy):
             will be recorded.
     '''
 
-    def __init__(self, name=None, volume=1.0, slippage=0.):
+    def __init__(self, name=None, volume=1.0, slippage=0., log_level=None):
         '''
         Initialize PositionalStrategy.
 
@@ -86,7 +88,8 @@ class PositionalStrategy(Strategy):
         self.volume = volume
         self.slippage = slippage
         self._price_overrides = 0
-        super(PositionalStrategy, self).__init__(name)
+        super(PositionalStrategy, self).__init__(name=name, 
+                                                 log_level=log_level)
 
     @property
     def position(self):

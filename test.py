@@ -1,12 +1,18 @@
 #!/usr/bin/env python
 
+try:
+    import pyaux
+    pyaux.use_exc_ipdb()
+    pyaux.use_exc_log()
+except:
+    pass
+
 import datetime
 import matplotlib.pyplot as plt
 import IPython
 import logging
 
-logging.basicConfig()
-LOGGING_LEVEL = logging.DEBUG
+logging.basicConfig(log_level=logging.DEBUG)
 
 from backtest.testers import SimpleBacktester
 from examples.ma_strategy import MACrossoverStrategy as strategy
@@ -14,7 +20,7 @@ from datatypes.processing import read_bars
 
 bars = read_bars('examples/testdata/RIZ1.csv')
 
-bt = SimpleBacktester(bars, strategy, log_level=LOGGING_LEVEL)
+bt = SimpleBacktester(bars, strategy)
 
 try:
     import pprint
