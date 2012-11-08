@@ -57,8 +57,10 @@ class PositionalStrategy(Strategy):
     ''' PositionalStrategy will handle all order generation resulting from
         changing its position via `change_posiiton` method.
 
-        Attribute `multi` will turn on multi-instrument backtesting if set to
-        true.
+        Strategy will infer single/multi asset backtest mode from first
+        datapoint it recieves.
+
+        In multi-asset backtest:
             self.change_position, self.long, self.short, self.exit from now on
             will require `instrument` argument set and self.position will return
             dict of positions on all traded instruments. You dont need to set
@@ -66,10 +68,7 @@ class PositionalStrategy(Strategy):
             will be recorded.
     '''
 
-    multi = False  ## Set this to True if your strategy operates on a
-                   ## basket of instruments
-
-    def __init__(self, name=None, volume=1.0, slippage=0., log_level=None):
+    def __init__(self, name=None, volume=1.0, slippage=0.):
         '''
         Initialize PositionalStrategy.
 
@@ -84,17 +83,10 @@ class PositionalStrategy(Strategy):
         And do not forget to call the constructor when overriding.
 
         '''
-        self.positions = [] if not self.multi else {}
         self.volume = volume
         self.slippage = slippage
-        if not self.multi:
-            self._current_point = None
-            self._first_timestamp = None
-        else:
-            self._current_point = {}
-            self._first_timestamp = {}
         self._price_overrides = 0
-        super(PositionalStrategy, self).__init__(name, log_level)
+        super(PositionalStrategy, self).__init__(name)
 
     @property
     def position(self):
@@ -120,6 +112,16 @@ class PositionalStrategy(Strategy):
         multi-asset backtest.
 
         '''
+        if not hasattr(self, 'multi'):
+            self.multi = type(data) == dict
+            if not self.multi:
+                self._current_point = None
+                self._first_timestamp = None
+                self.positions = []
+            else:
+                self._current_point = {}
+                self._first_timestamp = {}
+                self.positions = {}
         if not self.multi:
             datapoint = data
             timestamp = datapoint.timestamp
@@ -209,10 +211,10 @@ class PositionalStrategy(Strategy):
         else:
             raise Exception('requested price %s cannot be accepted' % price)
         ## executing
-        if self.multi:
+        if not self.multi:
             self.positions.append((timestamp, limit_price, position))
         else:
-            self.positions.append((timestamp, limit_price, position, instrument))
+            self.positions[instrument].append((timestamp, limit_price, position))
         if volume > 0:
             limit_price += slip
         elif volume < 0:
@@ -223,10 +225,18 @@ class PositionalStrategy(Strategy):
 
     def finalize(self):
         self.log.debug('finalization requested')
-        if self.position != 0:
-            self.change_position(0)
-        self._current_point = None
-        self._first_timestamp = None
+        if not self.multi:
+            if self.position != 0:
+                self.change_position(0)
+            self._current_point = None
+            self._first_timestamp = None
+            self.positions = []
+        else:
+            for i in self.positions.keys():
+                self.change_position(0, instrument=i)
+            self._current_point = {}
+            self._first_timestamp = {}
+            self.positions = {}
         self.log.debug('finalized')
 
     def exit(self, **kwargs):

@@ -58,8 +58,8 @@ class Backtester(object):
         self.strategy_class = strategy_class
         self.strategy_args = strategy_args
         self.strategy_kwargs = strategy_kwargs
-        self.data = data if hasattr(data[0], '__iter__') else [data]
-        self.multi = True if isinstance(data[0][0], dict) else False
+        self.data = data if hasattr(data[0], '__iter__') and not isinstance(data[0], dict) else [data]
+        self.multi = True if isinstance(self.data[0][0], dict) else False
         self.log = logging.getLogger(self.__class__.__name__)
         if not self.multi:
             calc = self._equity = equity.EquityCalculator()
@@ -80,6 +80,8 @@ class Backtester(object):
         for dataset in self.data:
             s = self.strategy_class(*self.strategy_args,
                                     **self.strategy_kwargs)
+            #assert s.multi == self.multi, \
+            #    'strategy and backtester have different asset modes'
             s.order_callback = self._matching_callback
             for datapoint in dataset:
                 ### NOTE: datapoint is assumed to have `C` attr
