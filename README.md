@@ -6,7 +6,7 @@ Simply clone and import modules as you need them. To get a sense of things study
 
 ## Features of this version
  * Ready-to-use one- and multi-asset backtesting and optimizing
- * Full Equity calculation calculation with various performance statistics such as PF, Sharpe, Sortino, MC maximum drawdown estimate, etc
+ * Automated equity curve calculation with various performance statistics such as PF, Sharpe, Sortino, MC maximum drawdown estimate, etc
   * Export equity curve into pandas
   * Easy to extend performance statistics set
  * E-ratio entry analysis
