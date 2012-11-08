@@ -2,7 +2,6 @@ import numpy
 import pandas
 import datetime
 import logging
-LOGGING_LEVEL = logging.INFO
 
 import performance_statistics
 
@@ -16,17 +15,16 @@ class EquityCalculator(object):
         The idea is to keep track of equity changes on trade and on every price
         change separately. '''
 
-    def __init__(self, full_curve=None, trades_curve=None, log_level=None):
+    def __init__(self, full_curve=None, trades_curve=None):
         self._full_curve = full_curve or EquityCurve()
         self._trades_curve = trades_curve or EquityCurve()
-        self._full_curve_merged = EquityCurve(log_level=log_level)
-        self._trades_curve_merged = EquityCurve(log_level=log_level)
+        self._full_curve_merged = EquityCurve()
+        self._trades_curve_merged = EquityCurve()
         self.pos = 0
         self.var = 0
         self.now = None
         self.price = None
         self.log = logging.getLogger(self.__class__.__name__)
-        self.log.setLevel(log_level or LOGGING_LEVEL)
 
     def new_price(self, timestamp, price):
         ''' Account for a new price.
@@ -87,13 +85,12 @@ class EquityCurve(object):
     ''' Keeps history of equity changes and calculates various performance
         statistics. Optional: keeps track of trades. '''
 
-    def __init__(self, log_level=None):
+    def __init__(self):
         self._changes = list()
         self._times = list()
         self._cumsum = 0
         self.trades = dict()
         self.log = logging.getLogger(self.__class__.__name__)
-        self.log.setLevel(log_level or LOGGING_LEVEL)
 
     def __len__(self):
         return len(self._changes)
@@ -173,7 +170,7 @@ class EquityCurve(object):
             raise Exception('Unsupported `mode` of statistics request')
 
     def merge(self, curve, overwrite=True, keep_trades=False):
-        ''' Merge two curves. Used for basket testing.
+        ''' Merge two curves by differentials.
             Will overwrite self unless `overwrite` was set to False.
             Set `keep_trades` to True if you want to try to keep recorded trades
             (could be problematic since they are supposedly two different
