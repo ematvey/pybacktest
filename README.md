@@ -30,6 +30,7 @@ Optimization is performed via `Optimizer` class. Mostly it mirrors `Backtester`.
 
 ### Multi-asset backtest
 Backtesting in multi-asset mode is different from single-asset mode in only one aspect: you should supply dicts with instrument names in keys and corresponding datapoints in values. Goes without saying that you should write your strategies in a way so they expect dicts of datapoints instead of datapoints. Iterables over iterables over dicts are supported too.
+If you use `PositionalStrategy`, `change_position` method will now require 'instrument' argument. For example, `self.change_position(-1, instrument='GOLD')`.
 
 #### Data structure example
 Single-asset mode:
