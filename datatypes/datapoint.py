@@ -13,7 +13,7 @@ class Datapoint(dict):
     _repr_fields = _base_fields
     
     def __init__(self, **kwargs):
-        [setattr(self, k, v) for k, v in kwargs.iteritems() if k in fields]
+        [setattr(self, k, v) for k, v in kwargs.iteritems() if k in self._fields]
     
     def __reprstring(self):
         s = ''
