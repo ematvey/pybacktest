@@ -25,7 +25,7 @@ bars = [list(bars)]
 
 opt = Optimizer(SimpleBacktester, bars, strategy, log_level=logging.DEBUG)
 opt.add_opt_param('fast_period', 5, 20, 5)
-opt.add_opt_param('slow_period', 20, 50, 5)
+#opt.add_opt_param('slow_period', 20, 50, 5)
 opt.run(('sharpe',))
 
 print 'Param names: %s' % opt.param_names
