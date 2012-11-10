@@ -88,6 +88,8 @@ class Optimizer(object):
         if not stat:
             stat = self.opt_results.values()[0].keys()[0]
         assert param in self.param_names, 'No opt results on param'
+        assert len(self.param_names) == 1, 'Cant plot 1d opt results in '\
+            'multi-dimensional optimization'
         i = self.param_names.index(param)
         results = [d[stat] for d in self.opt_results.values()]
         param_values = [p[0] for p in self.opt_results.keys()]
