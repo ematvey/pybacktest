@@ -16,9 +16,13 @@ logging.basicConfig()
 
 from backtest.testers import SimpleBacktester
 from examples.ma_strategy import MACrossoverStrategy as strategy
-from datatypes.processing import read_bars
+from datatypes.pandas_bars import pandas_bars_wrap
+from datatypes.quotes import get_daily_quotes_yahoo
 
-bars = read_bars('examples/testdata/RIZ1.csv')
+bars = pandas_bars_wrap(get_daily_quotes_yahoo('GOLD', '20070101', '20120101'))
+bars = [list(bars)]
+
+#IPython.embed()
 
 bt = SimpleBacktester(bars, strategy, log_level=logging.DEBUG)
 
