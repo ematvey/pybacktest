@@ -174,7 +174,7 @@ class PositionalStrategy(Strategy):
         point = self._current_point if not self.multi else \
                 self._current_point.get(instrument)
         if not point:
-            raise 'Wrong instrument requested'
+            raise Exception('Wrong instrument requested')
         timestamp = timestamp or point.timestamp
         slip = self.slippage
         old_position = self.position if not self.multi else \
