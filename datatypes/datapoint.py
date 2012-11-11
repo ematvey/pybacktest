@@ -4,41 +4,63 @@ import datetime
 from decimal import Decimal
 
 
-class Datapoint(dict):
+class Datapoint(object):
     ''' Market datapoint (e.g. tick or bar) '''
 
-    _base_fields = ('O', 'H', 'L', 'C', 'V')
-    _readonly_fields = ('Date', 'Time', 'date', 'time', 'TS', 'ts')
-    _fields = ('O', 'H', 'L', 'C', 'V', 'timestamp', 'contract')
-    _repr_fields = _base_fields
-    
+    _fields = ('timestamp', 'contract', 'O', 'H', 'L', 'C', 'V', 'OI')
+    #_readonly_fields = ('Date', 'Time', 'date', 'time', 'TS', 'ts')
+    _repr_fields = _fields
+
     def __init__(self, **kwargs):
-        [setattr(self, k, v) for k, v in kwargs.iteritems() if k in self._fields]
-    
-    def __reprstring(self):
+        self._dict = {}
+        # item calls redirection
+        self.__setitem__ = self._dict.__setitem__
+        self.__getitem__ = self._dict.__getitem__
+        #
+        self.init(self, **kwargs)
+
+    def init(self, **kwargs):
+        for k, v in kwargs.iteritems():
+            if k in self._fields:
+                self._dict[k] = v
+
+    def _reprstring(self):
         s = ''
         for f in self._repr_fields:
-            if hasattr(self, f):
+            if f in self._dict:
                 if len(s) != 0:
-                    s += ' / '
-                s += '%s %s' % (f, str(getattr(self, f)))
+                    s += ', '
+                s += '%s=%s' % (f, str(getattr(self, f)))
         return s
-    
+
     def __repr__(self):
-        return '<bar (%s) %s>' % (self.timestamp, self.__reprstring())
+        return 'Datapoint(%s)' % self._reprstring()
     
+    #def __getitem__(self, name):
+    #    #if not hasattr(self, '_dict'):
+    #    #    self._dict = {}
+    #    return self._dict[name]
+
+    #def __setitem__(self, name, value):
+    #    #if not hasattr(self, '_dict'):
+    #    #    self._dict = {}
+    #    self._dict[name] = value
+
     def __getattr__(self, name):
-        try:
-            return self[name]
-        except KeyError as e:
-            raise AttributeError(e)
-    
+        #if not hasattr(self, '_dict'):
+        #    self._dict = {}
+        if name == '_dict':
+            import ipdb; ipdb.set_trace()
+        return self._dict[name]
+
     def __setattr__(self, name, value):
-        if not name in self._readonly_fields:
-            self[name] = value
+        #if not hasattr(self, '_dict'):
+        #    self._dict = {}
+        if name != '_dict':
+            self._dict[name] = value
         else:
-            raise Exception("Attribute '%s' is read-only." % name)
-            
+            return object.__setattr__(self, name, value)
+
     @property
     def fields(self):
         return [f for f in self._fields if hasattr(self, f)]
@@ -67,13 +89,16 @@ class Datapoint(dict):
                 setattr(self, k, Decimal(v).quantize('1.00000'))
 
 
+
 ## -------------------------------------------------------
 # Compatibility classes
 
 class bar(Datapoint):
-    pass
+    def __repr__(self):
+        return 'Bar(%s)' % self._reprstring()
 class Bar(bar):
-    def __init__(self, Date, Time, O, H, L, C, V):
+    def __init__(self, Date, Time, O, H, L, C, V, **kwargs):
+        super(Bar, self).__init__(**kwargs)
         self.timestamp = datetime.datetime.strptime(str(int(Date))+" "+str(int(Time)), "%Y%m%d %H%M%S")
         self.O = float(O)
         self.H = float(H)
@@ -81,25 +106,13 @@ class Bar(bar):
         self.C = float(C)
         self.V = float(V)
 class tick(Datapoint):
-    pass
+    def __repr__(self):
+        return 'Bar(%s)' % self._reprstring()    
 class Tick(tick):
     def __init__(self, Date, Time, C, V, OI=None):
+        super(Tick, self).__init__()
         self.timestamp = datetime.datetime.strptime(str(int(Date))+" "+str(int(Time)), "%Y%m%d %H%M%S")
         self.C = float(C)
         self.V = float(V)
         if OI != None:
             self.OI = OI
-
-## --------------------------------------------------------
-
-class BarFrame(object):
-    def __init__(self, datapoints):
-        self.frame = data.BarsToDataframe(datapoints)
-    def __repr__(self):
-        return '<BarFrame %s .. %s>' % (self.frame['timestamp'][0].date(), 
-            self.frame['timestamp'][-1].date())
-    @property
-    def datapoints(self):
-        return data.BarsFromDataframe(self.frame)
-        
-DatapointContainer = BarFrame
