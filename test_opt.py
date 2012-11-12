@@ -24,9 +24,9 @@ bars = pandas_bars_wrap(get_daily_quotes_yahoo('GOLD', '20070101', '20120101'))
 bars = [list(bars)]
 
 opt = Optimizer(SimpleBacktester, bars, strategy, log_level=logging.DEBUG)
-opt.add_opt_param('fast_period', 5, 20, 1)
-#opt.add_opt_param('slow_period', 20, 50, 5)
-opt.run(('sharpe',))
+opt.add_opt_param('fast_period', 10, 20, 1)
+opt.add_opt_param('slow_period', 20, 50, 1)
+opt.run(('sharpe',), processes=8)
 
 print 'Param names: %s' % opt.param_names
 print 'Optimization results (param vector : resulting statistics)'

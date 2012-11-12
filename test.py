@@ -24,7 +24,9 @@ bars = [list(bars)]
 
 #IPython.embed()
 
-bt = SimpleBacktester(bars, strategy, log_level=logging.DEBUG)
+bt = SimpleBacktester(bars, strategy,
+                      strategy_kwargs={'fast_period': 10, 'slow_period': 25},
+                      log_level=logging.DEBUG)
 
 try:
     import pprint
