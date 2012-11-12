@@ -7,7 +7,10 @@ Compact framework for backtesting trading strategies.
   * `datatypes` -> `pybacktest.data`
 
 ## Installation
-Run `python setup.py install` to install, or run `python setup.py develop` to make your checkout folder importable globally.
+Either:
+ * run `pip install -e git+http://github.com/ematvey/PyBacktest.git#egg=pybacktest`,
+ * or, clone repo and run `python setup.py install` to install, or run `python setup.py develop` to make your checkout folder importable globally.
+
 After that, just `import pybacktest`.
 
 ## Features of this version
