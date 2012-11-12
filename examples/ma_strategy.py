@@ -1,5 +1,5 @@
 import numpy
-from backtest.strategies import PositionalStrategy
+from pybacktest.strategies import PositionalStrategy
 
 
 class MACrossoverStrategy(PositionalStrategy):

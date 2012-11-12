@@ -1,8 +1,14 @@
 # PyBacktest
 Compact framework for backtesting trading strategies.
 
+## News
+ * There was some renaming:
+  * `backtest` -> `pybacktest`
+  * `datatypes` -> `pybacktest.data`
+
 ## Installation
-Simply clone and import modules as you need them. To get a sense of things study test stripts in root folder. Setup via distutils will be added later.
+Run `python setup.py install` to install, or run `python setup.py develop` to make your checkout folder importable globally.
+After that, just `import pybacktest`.
 
 ## Features of this version
  * Ready-to-use one- and multi-asset backtesting and optimizing

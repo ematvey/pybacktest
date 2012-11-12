@@ -14,11 +14,11 @@ import logging
 
 logging.basicConfig()
 
-from backtest.testers import SimpleBacktester
-from backtest.opt import Optimizer
+from pybacktest.testers import SimpleBacktester
+from pybacktest.opt import Optimizer
 from examples.ma_strategy import MACrossoverStrategy as strategy
-from datatypes.pandas_bars import pandas_bars_wrap
-from datatypes.quotes import get_daily_quotes_yahoo
+from pybacktest.data.pandas_bars import pandas_bars_wrap
+from pybacktest.data.quotes import get_daily_quotes_yahoo
 
 bars = pandas_bars_wrap(get_daily_quotes_yahoo('GOLD', '20070101', '20120101'))
 bars = [list(bars)]
