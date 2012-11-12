@@ -90,11 +90,10 @@ class Optimizer(object):
         assert param in self.param_names, 'No opt results on param'
         assert len(self.param_names) == 1, 'Cant plot 1d opt results in '\
             'multi-dimensional optimization'
-        i = self.param_names.index(param)
-        results = [d[stat] for d in self.opt_results.values()]
-        param_values = [p[0] for p in self.opt_results.keys()]
-        plt.plot(param_values, results)
-        plt.xlabel(param or self.param_names[0])
+        param = self.param_names.index(param)
+        data = [(k[param], v[stat]) for k, v in sorted(self.opt_results.iteritems())]
+        plt.plot([i[0] for i in data], [i[1] for i in data])
+        plt.xlabel(param)
         plt.ylabel(stat)
         plt.title('1d optimization plot')
         if show:
