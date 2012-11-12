@@ -23,12 +23,9 @@ setup(name='PyBacktest',
   author_email='Matvey.Ezhov@gmail.com',
   url='https://github.com/ematvey/PyBacktest',
   packages=['pybacktest'],
-  install_requires=['numpy', 'scipy', 'pandas'],
+  install_requires=['numpy', 'scipy', 'ipython', 'pandas', 'pyaux'],
   dependency_links=[
     'https://github.com/HoverHell/pyaux/tarball/master#egg=pyaux',
   ],
-  extras_require={
-    'recommended': ['pyaux'],
-  },
   **extra_args
 )
