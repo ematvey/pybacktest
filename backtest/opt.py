@@ -1,6 +1,8 @@
 import logging
 import itertools
 import matplotlib.pyplot as plt
+import copy
+import forkmap
 
 
 def fxrange(start, end=None, inc=None):
@@ -58,27 +60,45 @@ class Optimizer(object):
         param_names = self.param_names = self.opt_params.keys()
         self.log.info('Running optimization on params: %s', param_names)
         product = itertools.product(*self.opt_params.values())
+        #print list(copy.deepcopy(product))
         c = 1
-        for paramset in product:
+        self.bt = []
+        #data = copy.deepcopy(self.data)
+        #for paramset in product:
+        @forkmap.parallelizable(8)
+        def f(paramset):
+            print paramset
             pdict = dict(zip(param_names, paramset))
             self.log.info('Optimization step %s: %s', c, pdict)
+            strat_kwa = {}
+            strat_kwa.update(self.strategy_kwargs)
+            strat_kwa.update(pdict)
+            from cgate.cgate_aux import o_repr
             backtester = self.backtester_class(
                 self.data, self.strategy_class,
-                strategy_args=self.strategy_args,
-                strategy_kwargs=self.strategy_kwargs,
+                #strategy_args=self.strategy_args,
+                strategy_kwargs=strat_kwa,
                 run=False, log_level=logging.WARNING)
-            backtester.strategy_kwargs.update(pdict)
+            #print o_repr(backtester)
             backtester.run()
+            self.bt.append(backtester)
             if curve_type == 'trades':
-                curve = backtester.trades_curve
+                curve = copy.copy(backtester.trades_curve)
             elif curve_type == 'full':
-                curve = backtester.full_curve
+                curve = copy.copy(backtester.full_curve)
             else:
                 raise Exception('Requested unrecognized curve_type')
+            del backtester
             results = dict(zip(stats, [curve[stat] for stat in stats]))
-            self.log.info('Optimization step %s completed: %s', c, results)
-            self.opt_results[paramset] = results
-            c += 1
+            #import IPython; IPython.embed(banner1='')
+            #curve.series().plot()
+            #curve.plt.show()
+            #self.log.info('Optimization step %s completed: %s', c, results)
+            #self.opt_results[paramset] = results
+            return (paramset, results)
+            #c += 1
+            #print self.data == data
+        self.opt_results = dict(forkmap.map(f, product))
 
     def plot1d(self, stat=None, param=None, show=True):
         ''' 1-d plot of optimization results. Both `stat` and `param` defaults
