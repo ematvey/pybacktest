@@ -10,7 +10,7 @@ LOGGING_LEVEL = logging.INFO
 
 class Strategy(object):
 
-    def __init__(self, name=None, log_level=None):
+    def __init__(self, name=None, log_level=None, *args, **kwargs):
         self.orders = []
         if name == None:
             name = self.__class__.__name__
@@ -70,7 +70,8 @@ class PositionalStrategy(Strategy):
             will be recorded.
     '''
 
-    def __init__(self, name=None, volume=1.0, slippage=0., log_level=None):
+    def __init__(self, name=None, volume=1.0, slippage=0., log_level=None,
+                 *args, **kwargs):
         '''
         Initialize PositionalStrategy.
 
