@@ -197,7 +197,7 @@ class EquityCurve(object):
             else:
                 return curve
         if len(changes2) == 0:
-            return self * overwrite or None
+            return self if overwrite else None
         i = j = 0
         changes = []
         times = []
