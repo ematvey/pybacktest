@@ -46,6 +46,8 @@ class Strategy(object):
     def order(self, timestamp, limit_price, volume, instrument=None):
         """ Send order method. Optional `instrument` argument is
             required if running multi-asset backtest. """
+        if volume == 0:
+            return  # no need to do anything
         if instrument:
             order = (timestamp, limit_price, volume, instrument)
         else:
