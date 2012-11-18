@@ -11,7 +11,7 @@ class Datapoint(object):
     #_readonly_fields = ('Date', 'Time', 'date', 'time', 'TS', 'ts')
     _repr_fields = _fields
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         self._dict = {}
         # item calls redirection
         self.__setitem__ = self._dict.__setitem__
@@ -19,7 +19,7 @@ class Datapoint(object):
         #
         self.init(self, **kwargs)
 
-    def init(self, **kwargs):
+    def init(self, *args, **kwargs):
         for k, v in kwargs.iteritems():
             if k in self._fields:
                 self._dict[k] = v
@@ -98,7 +98,7 @@ class bar(Datapoint):
         return 'Bar(%s)' % self._reprstring()
 class Bar(bar):
     def __init__(self, Date, Time, O, H, L, C, V, **kwargs):
-        super(Bar, self).__init__(**kwargs)
+        super(Bar, self).__init__()
         self.timestamp = datetime.datetime.strptime(str(int(Date))+" "+str(int(Time)), "%Y%m%d %H%M%S")
         self.O = float(O)
         self.H = float(H)
