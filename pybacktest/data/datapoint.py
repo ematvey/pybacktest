@@ -8,7 +8,6 @@ class Datapoint(object):
     ''' Market datapoint (e.g. tick or bar) '''
 
     _fields = ('timestamp', 'contract', 'O', 'H', 'L', 'C', 'V', 'OI')
-    #_readonly_fields = ('Date', 'Time', 'date', 'time', 'TS', 'ts')
     _repr_fields = _fields
 
     def __init__(self, *args, **kwargs):
@@ -36,26 +35,12 @@ class Datapoint(object):
     def __repr__(self):
         return 'Datapoint(%s)' % self._reprstring()
     
-    #def __getitem__(self, name):
-    #    #if not hasattr(self, '_dict'):
-    #    #    self._dict = {}
-    #    return self._dict[name]
-
-    #def __setitem__(self, name, value):
-    #    #if not hasattr(self, '_dict'):
-    #    #    self._dict = {}
-    #    self._dict[name] = value
-
     def __getattr__(self, name):
-        #if not hasattr(self, '_dict'):
-        #    self._dict = {}
         if name == '_dict':
             import ipdb; ipdb.set_trace()
         return self._dict[name]
 
     def __setattr__(self, name, value):
-        #if not hasattr(self, '_dict'):
-        #    self._dict = {}
         if name != '_dict':
             self._dict[name] = value
         else:
@@ -64,23 +49,6 @@ class Datapoint(object):
     @property
     def fields(self):
         return [f for f in self._fields if hasattr(self, f)]
-    
-    @property
-    def Date(self):
-        ''' Legacy compatibility conversion. '''
-        return int(self.timestamp.strftime("%Y%m%d"))
-    
-    @property
-    def Time(self):
-        ''' Legacy compatibility conversion. '''
-        if self.timestamp.microsecond == 0:
-            return int(self.timestamp.strftime("%H%M%S"))
-        else:
-            return float(self.timestamp.strftime("%H%M%S.%f"))
-    
-    @property
-    def TS(self):
-        return self.timestamp
     
     def decimalize(self):
         """Convert all float attributes to decimals with 5-point precision."""
