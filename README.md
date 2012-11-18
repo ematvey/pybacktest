@@ -1,11 +1,19 @@
 # PyBacktest
-Compact framework for backtesting trading strategies.
+Compact backtesting framework in Python.
+
+## News
+ * There was some renaming:
+  * `backtest` -> `pybacktest`
+  * `datatypes` -> `pybacktest.data`
 
 ## Installation
-Simply clone and import modules as you need them. To get a sense of things study test stripts in root folder. Setup via distutils will be added later.
+Make sure you have installed at least numpy and scipy. They take lot of depenencies to compile. Clone repo and run `python setup.py install` to install, or run `python setup.py develop` to make your checkout folder importable globally.
+You could also try running `pip install -e git+http://github.com/ematvey/PyBacktest.git#egg=pybacktest` without cloning, but that doesn't seem to work as reliably.
+
+After that, just `import pybacktest`.
 
 ## Features of this version
- * Ready-to-use one- and multi-asset backtesting and optimizing
+ * Ready-to-use one- and multi-asset backtesting and parallel-able optimizing
  * Automated equity curve calculation with various performance statistics such as PF, Sharpe, Sortino, MC maximum drawdown estimate, etc
   * Export equity curve into pandas
   * Easy to extend performance statistics set
@@ -13,7 +21,7 @@ Simply clone and import modules as you need them. To get a sense of things study
  * Generate equity curve class from AmiBroker's tradelist
 
 ## Examples
-Run `python test.py` to backtest simple MA crossover strategy or `python test_opt.py` to to try optimization. You might have to install some dependencies.
+Run `python test.py` to backtest simple MA crossover strategy or `python test_opt.py` to to try optimization.
 
 ## Basic workflow
 ### Simple backtest
@@ -26,7 +34,11 @@ When you're ready, create SimpleBacktester object with your dataset and strategy
 After it is finished equity curves will be in `full_curve`, `trades_curve` attributes.
 
 ### Optimization
-Optimization is performed via `Optimizer` class. Mostly it mirrors `Backtester`. Create instance by supplying backtester class, data and strategy class. Add optimization params via `add_opt_params` as usual (params will be supplied as kwargs in strategy's constructor). Finally, `run` optimizer with target statistics as argument. That's about it.
+Optimization is performed via `Optimizer` class. Mostly it mirrors `Backtester`. Create instance by supplying backtester class, data and strategy class. Add optimization params via `add_opt_params` as usual (params will be supplied as kwargs in strategy's constructor).
+
+Finally, `run` optimizer with target statistics as argument. Note that you can pass `process` argument to select a number of cores/processors you wish to use for optimization.
+
+That's about it.
 
 ### Multi-asset backtest
 Backtesting in multi-asset mode is different from single-asset mode in only one aspect: you should supply dicts with instrument names in keys and corresponding datapoints in values. Goes without saying that you should write your strategies in a way so they expect dicts of datapoints instead of datapoints. Iterables over iterables over dicts are supported too.

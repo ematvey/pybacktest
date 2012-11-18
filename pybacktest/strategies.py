@@ -10,7 +10,7 @@ LOGGING_LEVEL = logging.INFO
 
 class Strategy(object):
 
-    def __init__(self, name=None, log_level=None):
+    def __init__(self, name=None, log_level=None, *args, **kwargs):
         self.orders = []
         if name == None:
             name = self.__class__.__name__
@@ -46,6 +46,8 @@ class Strategy(object):
     def order(self, timestamp, limit_price, volume, instrument=None):
         """ Send order method. Optional `instrument` argument is
             required if running multi-asset backtest. """
+        if volume == 0:
+            return  # no need to do anything
         if instrument:
             order = (timestamp, limit_price, volume, instrument)
         else:
@@ -70,7 +72,8 @@ class PositionalStrategy(Strategy):
             will be recorded.
     '''
 
-    def __init__(self, name=None, volume=1.0, slippage=0., log_level=None):
+    def __init__(self, name=None, volume=1.0, slippage=0., log_level=None,
+                 *args, **kwargs):
         '''
         Initialize PositionalStrategy.
 

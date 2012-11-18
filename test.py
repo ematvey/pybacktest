@@ -14,17 +14,19 @@ import logging
 
 logging.basicConfig()
 
-from backtest.testers import SimpleBacktester
+from pybacktest.testers import SimpleBacktester
+from pybacktest.data.pandas_bars import pandas_bars_wrap
+from pybacktest.data.quotes import get_daily_quotes_yahoo
 from examples.ma_strategy import MACrossoverStrategy as strategy
-from datatypes.pandas_bars import pandas_bars_wrap
-from datatypes.quotes import get_daily_quotes_yahoo
 
 bars = pandas_bars_wrap(get_daily_quotes_yahoo('GOLD', '20070101', '20120101'))
 bars = [list(bars)]
 
 #IPython.embed()
 
-bt = SimpleBacktester(bars, strategy, log_level=logging.DEBUG)
+bt = SimpleBacktester(bars, strategy,
+                      strategy_kwargs={'fast_period': 10, 'slow_period': 25},
+                      log_level=logging.DEBUG)
 
 try:
     import pprint
