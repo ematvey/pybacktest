@@ -79,7 +79,7 @@ class Backtester(object):
 
     def run(self):
         self.log.info('backtest started')
-        self.log.info('%s-asset mode', 'single' if self.multi else 'multi')
+        self.log.info('%s-asset mode', 'single' if not self.multi else 'multi')
         for dataset in self.data:
             s = self.strategy_class(log_level=self.log_level,
                                     *self.strategy_args,
