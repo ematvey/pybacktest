@@ -7,6 +7,8 @@ from .datapoint import bar
 yahoo_tpl = {'o': 'Open', 'h': 'High', 'l': 'Low', 'c': 'Close',
              'v': 'Volume', 'ac': 'Adj Close'}
 
+finam_tpl = {'o': '<OPEN>', 'h': '<HIGH>', 'l': '<LOW>', 'c': '<CLOSE>',
+            'v': '<VOL>'}
 
 def pandas_bars_wrap(dataframe, template=yahoo_tpl):
     bars = []
