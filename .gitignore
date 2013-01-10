@@ -3,3 +3,5 @@
 *.egg
 *.egg-info
 build/
+.idea/
+dist/
