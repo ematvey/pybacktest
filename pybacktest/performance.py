@@ -28,7 +28,6 @@ def mcmdd(eqd, runs=1000, quantile=0.99, array=False):
 
 
 def holding_periods(eqd):
-    assert ((eqd != 0) & (eqd.shift() == 0) | (eqd == 0)).all(), 'equity diffs do not have correct structure'
     eqd.name = 'eqd'
     eqd.index.name = 'time'
     eqd = eqd.reset_index()
