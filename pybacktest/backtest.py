@@ -134,9 +134,12 @@ class Backtest(object):
 
     def summary(self):
         import yaml
-        print '%s performance summary\n' % self
+        s = '%s performance summary' % self
+        print s
+        print '=' * len(s)
         print yaml.dump(self.report, allow_unicode=True,
                         default_flow_style=False)
+        print '=' * len(s)
 
     def plot_equity(self, subset=None):
         if subset is None:

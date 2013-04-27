@@ -26,16 +26,9 @@ def mcmdd(eqd, runs=1000, quantile=0.99, array=False):
     else:
         return maxdds
 
-
 def holding_periods(eqd):
-    eqd.name = 'eqd'
-    eqd.index.name = 'time'
-    eqd = eqd.reset_index()
-    eqd.time = map(lambda x: x.to_pydatetime(), eqd.time)
-    eqd.eqd = eqd.eqd.astype(bool).astype(float)
-    d = eqd.diff()
-    d = d.time[d.eqd == 1].reset_index(drop=True)
-    return d
+    # rather crude, but will do
+    return pandas.Series(eqd.index.to_pydatetime(), index=eqd.index).diff().dropna()
 
 
 def performance_summary(equity_diffs, quantile=0.99, precision=4):
