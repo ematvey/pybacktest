@@ -17,7 +17,7 @@ And then tested like this:
 We use it in our research and production operations.
 
 ## Tutorial
-Tutorial is provided as ipython notebook. You run it from cloned repo or [watch via nbviewer](http://nbviewer.ipython.org/urls/raw.github.com/ematvey/pybacktest/master/examples/tutorial.ipynb).
+Tutorials are provided as ipython notebooks in folder *examples*. You run it from cloned repo or [watch via nbviewer](http://nbviewer.ipython.org/urls/raw.github.com/ematvey/pybacktest/master/examples/tutorial.ipynb).
 
 ## Status
 Single-security backtester is ready. Multi-security testing could be implemented by running single-sec backtests and then combining equity. Later we will add easier way.
