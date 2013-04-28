@@ -3,5 +3,8 @@ Simplistic but powerful backtesting framework in python/pandas. It allows user t
 
 We use it in our research and production operations.
 
+## Tutorial
+Tutorial is provided as ipython notebook. You run it from cloned repo or watch via nbviewer: (http://nbviewer.ipython.org/urls/raw.github.com/ematvey/pybacktest/master/examples/tutorial.ipynb).
+
 ## Status
 Code is being extracted from out private codebase. Come back soon.
