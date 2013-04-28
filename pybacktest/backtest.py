@@ -6,12 +6,13 @@ import pandas
 import IPython
 import pyquant
 import pylab
-import parts
-import performance
 import datetime
 import time
 
-from cached_property import cached_property
+from . import parts, performance
+
+from .cached_property import cached_property
+
 
 __all__ = ['Backtest']
 
@@ -139,7 +140,7 @@ class Backtest(object):
         print '=' * len(s)
         print yaml.dump(self.report, allow_unicode=True,
                         default_flow_style=False)
-        print '=' * len(s)
+        print '-' * len(s)
 
     def plot_equity(self, subset=None):
         if subset is None:
