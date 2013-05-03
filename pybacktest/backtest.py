@@ -158,7 +158,6 @@ class Backtest(object):
     def plot_trades(self, subset=None):
         if subset is None:
             subset = slice(None, None)
-        self.ohlc.C.ix[subset].plot(color='black', label='price')
         fr = self.trades.ix[subset]
         le = fr.price[(fr.pos > 0) & (fr.vol > 0)]
         se = fr.price[(fr.pos < 0) & (fr.vol < 0)]
@@ -174,4 +173,5 @@ class Backtest(object):
                    label='short exit')
         eq = self.equity.ix[subset].cumsum()
         (eq + self.ohlc.C[eq.index[0]]).plot(color='red', style='-')
+        self.ohlc.C.ix[subset].plot(color='black', label='price')
         pylab.title('%s\nTrades for %s' % (self, subset))
