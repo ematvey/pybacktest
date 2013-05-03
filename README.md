@@ -1,5 +1,5 @@
-# pybacktest
-Simple but powerful backtesting framework in python/pandas.
+# `pybacktest`
+Simple yet powerful backtesting framework in python/pandas.
 
 It allows user to specify trading strategies using full power of pandas, at the same time hiding all boring things like manually calculating trades, equity, performance statistics and creating visualizations. Resulting strategy code is usable both in research and production setting.
 
