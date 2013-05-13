@@ -3,10 +3,7 @@
 # part of pybacktest package: https://github.com/ematvey/pybacktest
 
 import pandas
-import IPython
-import pyquant
 import pylab
-import datetime
 import time
 
 from . import parts, performance
@@ -90,13 +87,13 @@ class Backtest(object):
 
     @cached_property(ttl=0)
     def default_price(self):
-        return self.ohlc.O.shift(-1)
+        return self.ohlc.O#.shift(-1)
 
     @cached_property(ttl=0)
     def trade_price(self):
         pr = self.prices
         if pr is None:
-            return self.ohlc.O.shift(-1)
+            return self.ohlc.O#.shift(-1)
         dp = pandas.Series(dtype=float, index=pr.index)
         for pf, sf in zip(self._pr_mask_int, self._sig_mask_int):
             s = self.signals[sf]
@@ -111,11 +108,13 @@ class Backtest(object):
 
     @cached_property(ttl=0)
     def trades(self):
-        t = pandas.DataFrame({'pos': self.positions})
+        p = self.positions.reindex(self.signals.index).ffill().shift().dropna()
+        p = p[p != p.shift()]
+        t = pandas.DataFrame({'pos': p})
         t['price'] = self.trade_price
         t = t.dropna()
         t['vol'] = t.pos.diff()
-        return t
+        return t.dropna()
 
     @cached_property(ttl=0)
     def equity(self):
@@ -137,7 +136,7 @@ class Backtest(object):
         import yaml
         s = '%s performance summary' % self
         print s
-        print '=' * len(s)
+        print '-' * len(s), '\n'
         print yaml.dump(self.report, allow_unicode=True,
                         default_flow_style=False)
         print '-' * len(s)
@@ -172,6 +171,6 @@ class Backtest(object):
         pylab.plot(sx.index, sx.values, 'o', color='red', markersize=7,
                    label='short exit')
         eq = self.equity.ix[subset].cumsum()
-        (eq + self.ohlc.C[eq.index[0]]).plot(color='red', style='-')
-        self.ohlc.C.ix[subset].plot(color='black', label='price')
+        (eq + self.ohlc.O[eq.index[0]]).plot(color='red', style='-')
+        self.ohlc.O.ix[subset].plot(color='black', label='price')
         pylab.title('%s\nTrades for %s' % (self, subset))
