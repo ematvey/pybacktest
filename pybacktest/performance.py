@@ -28,7 +28,7 @@ def mcmdd(eqd, runs=1000, quantile=0.99, array=False):
 
 def holding_periods(eqd):
     # rather crude, but will do
-    return pandas.Series(eqd.index.to_pydatetime(), index=eqd.index).diff().dropna()
+    return pandas.Series(eqd.index.to_datetime(), index=eqd.index, dtype=object).diff().dropna()
 
 
 def performance_summary(equity_diffs, quantile=0.99, precision=4):
@@ -49,11 +49,11 @@ def performance_summary(equity_diffs, quantile=0.99, precision=4):
             'trades/month': round(eqd.groupby(
                     lambda x: (x.year, x.month)
                     ).apply(lambda x: x[x != 0].count()).mean(), precision),
-            'holding periods': {
-                'max': str(hold.max()),
-                'median': str(force_quantile(hold, 0.5)),
-                'min': str(hold.min()),
-                }
+            #'holding periods': {
+            #    'max': str(hold.max()),
+            #    'median': str(force_quantile(hold, 0.5)),
+            #    'min': str(hold.min()),
+            #    }
             },
         'performance': {
             'profit': round(eqd.sum(), precision),
