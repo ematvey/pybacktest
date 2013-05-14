@@ -108,7 +108,7 @@ class Backtest(object):
 
     @cached_property(ttl=0)
     def trades(self):
-        p = self.positions.reindex(self.signals.index).ffill().shift().dropna()
+        p = self.positions.reindex(self.signals.index).ffill().shift().fillna(value=0)
         p = p[p != p.shift()]
         t = pandas.DataFrame({'pos': p})
         t['price'] = self.trade_price
