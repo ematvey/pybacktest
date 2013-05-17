@@ -16,6 +16,12 @@ def load_from_yahoo(ticker='SPY', start='1900', adjust_close=False):
 
     Defaults are in place for convenience. """
 
+    if isinstance(ticker, list):
+        return pandas.Panel(
+            {t: load_from_yahoo(
+                ticker=t, start=start, adjust_close=adjust_close)
+             for t in ticker})
+
     data = pandas.io.data.DataReader(ticker, data_source='yahoo', start=start)
     data = data.rename(columns={'Open': 'O', 'High': 'H', 'Low': 'L',
                                 'Close': 'C', 'Adj Close': 'AC',
