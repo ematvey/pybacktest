@@ -52,7 +52,7 @@ def trades_to_equity(trd):
     e = -e.reindex(trd.index).fillna(value=0)
     return e
 
-def extract_frame(dataobj, dtype, ext_mask, int_mask):
+def extract_frame(dataobj, ext_mask, int_mask):
     df = {}
     for f_int, f_ext in zip(int_mask, ext_mask):
         obj = dataobj.get(f_ext)
@@ -61,7 +61,7 @@ def extract_frame(dataobj, dtype, ext_mask, int_mask):
         else:
             df[f_int] = None
     if any(map(lambda x: isinstance(x, pandas.Series), df.values())):
-        return pandas.DataFrame(df).astype(dtype)
+        return pandas.DataFrame(df)
     return None
 
 

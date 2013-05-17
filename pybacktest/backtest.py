@@ -77,12 +77,12 @@ class Backtest(object):
 
     @cached_property(ttl=0)
     def signals(self):
-        return parts.extract_frame(self.dataobj, bool, self._sig_mask_ext,
-                                   self._sig_mask_int)
+        return parts.extract_frame(self.dataobj, self._sig_mask_ext,
+                                   self._sig_mask_int).fillna(value=False)
 
     @cached_property(ttl=0)
     def prices(self):
-        return parts.extract_frame(self.dataobj, float, self._pr_mask_ext,
+        return parts.extract_frame(self.dataobj, self._pr_mask_ext,
                                    self._pr_mask_int)
 
     @cached_property(ttl=0)
@@ -110,8 +110,11 @@ class Backtest(object):
     def trades(self):
         p = self.positions.reindex(self.signals.index).ffill().shift().fillna(value=0)
         p = p[p != p.shift()]
+        tp = self.trade_price
+        assert p.index.tz == tp.index.tz, "Cant operate on singals and prices "\
+            "indexed as of different timezones"
         t = pandas.DataFrame({'pos': p})
-        t['price'] = self.trade_price
+        t['price'] = tp
         t = t.dropna()
         t['vol'] = t.pos.diff()
         return t.dropna()
