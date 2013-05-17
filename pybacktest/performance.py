@@ -19,6 +19,12 @@ def UPI(eqd, risk_free=0):
     eq = eqd[eqd != 0]
     return (eq.mean() - risk_free) / ulcer(eq)
 
+def MPI(eqd):
+    ''' Modified UPI, with enumerator resampled to months (to be able to
+    compare short- to medium-term strategies with different trade frequencies. '''
+    eq = eqd[eqd != 0]
+    return eq.resample('M', how='sum').mean() / ulcer(eq)
+
 def mcmdd(eqd, runs=1000, quantile=0.99, array=False):
     maxdds = [maxdd(eqd.take(numpy.random.permutation(len(eqd))).cumsum()) for i in xrange(runs)]
     if not array:
@@ -73,5 +79,6 @@ def performance_summary(equity_diffs, quantile=0.99, precision=4):
             'maxdd': round(maxdd(eqd), precision),
             'WCDD (monte-carlo %s quantile)' % quantile : round(mcmdd(eqd, quantile=quantile), precision),
             'UPI': round(UPI(eqd), precision),
+            'MPI': round(MPI(eqd), precision),
             }
         }
