@@ -45,11 +45,11 @@ def trades_to_equity(trd):
     '''
     psig = trd.pos.apply(lambda x: cmp(x, 0))
     closepoint = psig != psig.shift()
-    e = (trd.vol * trd.price).cumsum()[closepoint] - (trd.pos * trd.price)[closepoint]
-    e0 = e.ix[0]
+    e = (trd.vol * trd.price).cumsum()[closepoint] - \
+        (trd.pos * trd.price)[closepoint]
     e = e.diff()
-    e.ix[0] = e0
-    e = -e.reindex(trd.index).fillna(value=0)
+    e = e.reindex(trd.index).fillna(value=0)
+    e[e != 0] *= -1
     return e
 
 def extract_frame(dataobj, ext_mask, int_mask):
