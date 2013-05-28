@@ -16,6 +16,13 @@ And then tested like this:
 
 We use it in our research and production operations.
 
+## Installation
+```
+git clone https://github.com/ematvey/pybacktest.git
+cd pybacktest
+python setup.py install
+```
+
 ## Tutorial
 Tutorials are provided as ipython notebooks in folder *examples*. You run it from cloned repo or [watch via nbviewer](http://nbviewer.ipython.org/urls/raw.github.com/ematvey/pybacktest/master/examples/tutorial.ipynb).
 
