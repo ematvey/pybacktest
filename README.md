@@ -22,6 +22,7 @@ git clone https://github.com/ematvey/pybacktest.git
 cd pybacktest
 python setup.py install
 ```
+If you don't install it in virtualenv, you might need to prepend last line with sudo.
 
 ## Tutorial
 Tutorials are provided as ipython notebooks in folder *examples*. You run it from cloned repo or [watch via nbviewer](http://nbviewer.ipython.org/urls/raw.github.com/ematvey/pybacktest/master/examples/tutorial.ipynb).
