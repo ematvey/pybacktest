@@ -28,4 +28,7 @@ def iter_verify(strategy_fn, data, window_size):
          'prev': pandas.DataFrame(mis_prev)}
     ).to_frame().swaplevel(0, 1).sort()
     df = df.ix[df['cur'] != df['prev']]
-    return df
+    if len(df):
+        return df
+    else:
+        return 'valid'
