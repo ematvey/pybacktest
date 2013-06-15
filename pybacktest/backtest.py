@@ -14,6 +14,22 @@ from .cached_property import cached_property
 __all__ = ['Backtest']
 
 
+
+class StatEngine(object):
+    def __init__(self, equity_fn):
+        self._stats = [i for i in dir(performance) if not i.startswith('_')]
+        self._equity_fn = equity_fn
+    def __dir__(self):
+        return dir(type(self)) + self._stats
+    def __getattr__(self, attr):
+        if attr in self._stats:
+            equity = self._equity_fn()
+            fn = getattr(performance, attr)
+            return fn(equity)
+        else:
+            return Object.__getitem__(self, attr)
+
+
 class Backtest(object):
     '''
     Backtest (Pandas implementation of vectorized backtesting).
@@ -67,6 +83,7 @@ class Backtest(object):
                                                    obj=self.ohlc)
         self.eqplot = parts.Slicer(self.plot_equity, obj=self.ohlc)
         self.run_time = time.strftime('%Y-%d-%m %H:%M:%S %Z', time.localtime())
+        self.stats = StatEngine(lambda: self.equity)
 
     def __repr__(self):
         return "Backtest('%s', %s)" % (self.name, self.run_time)

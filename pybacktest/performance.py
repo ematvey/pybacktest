@@ -8,8 +8,25 @@ import pandas
 import numpy
 
 
-def maxdd(eq):
-    return (eq - pandas.expanding_max(eq)).abs().max()
+
+start = lambda eqd: eqd.index[0]
+end = lambda eqd: eqd.index[-1]
+days = lambda eqd: (eqd.index[-1] - eqd.index[0]).days
+trades_per_month = lambda eqd: eqd.groupby(
+    lambda x: (x.year, x.month)
+).apply(lambda x: x[x != 0].count()).mean()
+profit = lambda eqd: eqd.sum()
+average = lambda eqd: eqd[eqd != 0].mean()
+average_gain = lambda eqd: eqd[eqd > 0].mean()
+average_loss = lambda eqd: eqd[eqd < 0].mean()
+winrate = lambda eqd: float(sum(eqd > 0)) / len(eqd)
+payoff = lambda eqd: eqd[eqd > 0].mean() / -eqd[eqd < 0].mean()
+pf = PF = lambda eqd: abs(eqd[eqd > 0].sum() / eqd[eqd < 0].sum())
+maxdd = lambda eqd: (eqd.cumsum() - pandas.expanding_max(eqd.cumsum())).abs().max()
+rf = RF = lambda eqd: eqd.sum() / maxdd(eqd)
+sharpe = lambda eqd: eqd.mean() / eqd.std()
+sortino = lambda eqd: eqd.mean() / eqd[eqd < 0].std()
+trades_total = lambda eqd: len(eqd[eqd != 0])
 
 def ulcer(eqd):
     eq = eqd.cumsum()
@@ -18,12 +35,13 @@ def ulcer(eqd):
 def UPI(eqd, risk_free=0):
     eq = eqd[eqd != 0]
     return (eq.mean() - risk_free) / ulcer(eq)
+upi = UPI
 
 def MPI(eqd):
     ''' Modified UPI, with enumerator resampled to months (to be able to
     compare short- to medium-term strategies with different trade frequencies. '''
-    #eq = eqd[eqd != 0]
     return eqd.resample('M', how='sum').mean() / ulcer(eqd)
+mpi = MPI
 
 def mcmdd(eqd, runs=1000, quantile=0.99, array=False):
     maxdds = [maxdd(eqd.take(numpy.random.permutation(len(eqd))).cumsum()) for i in xrange(runs)]
@@ -81,6 +99,6 @@ def performance_summary(equity_diffs, quantile=0.99, precision=4):
             'maxdd': round(maxdd(eqd), precision),
             'WCDD (monte-carlo %s quantile)' % quantile : round(mcmdd(eqd, quantile=quantile), precision),
             'UPI': round(UPI(eqd), precision),
-            'MPI': round(MPI(equity_diffs), precision),
+            'MPI': round(MPI(eqd), precision),
             }
         }
