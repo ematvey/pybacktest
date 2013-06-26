@@ -44,7 +44,7 @@ def MPI(eqd):
 mpi = MPI
 
 def mcmdd(eqd, runs=1000, quantile=0.99, array=False):
-    maxdds = [maxdd(eqd.take(numpy.random.permutation(len(eqd))).cumsum()) for i in xrange(runs)]
+    maxdds = [maxdd(eqd.take(numpy.random.permutation(len(eqd)))) for i in xrange(runs)]
     if not array:
         return pandas.Series(maxdds).quantile(quantile)
     else:
@@ -91,7 +91,7 @@ def performance_summary(equity_diffs, quantile=0.99, precision=4):
             'winrate': round(float(sum(eqd > 0)) / len(eqd), precision),
             'payoff': round(eqd[eqd > 0].mean() / -eqd[eqd < 0].mean(), precision),
             'PF': round(abs(eqd[eqd > 0].sum() / eqd[eqd < 0].sum()), precision),
-            'RF': round(eqd.sum() / maxdd(eqd.cumsum()), precision),
+            'RF': round(eqd.sum() / maxdd(eqd), precision),
             },
         'risk/return profile': {
             'sharpe': round(eqd.mean() / eqd.std(), precision),
