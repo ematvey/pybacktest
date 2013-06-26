@@ -25,7 +25,10 @@ class StatEngine(object):
         if attr in self._stats:
             equity = self._equity_fn()
             fn = getattr(performance, attr)
-            return fn(equity)
+            try:
+                return fn(equity)
+            except:
+                return
         else:
             return Object.__getitem__(self, attr)
 
