@@ -20,7 +20,7 @@ def iter_verify(strategy_fn, data, window_size):
             mis_prev[ix] = sp
             mis_cur[ix] = s.iloc[-2]
         sp = s.iloc[-1]
-        prg = round(float(i) / (len(data) - window_size) * 100, 1)
+        prg = round(((float(i) - window_size) / (len(data) - window_size)) * 100, 1)
         sys.stdout.write(' \r%s%% done' % prg)
         sys.stdout.flush()
     df = pandas.Panel(
