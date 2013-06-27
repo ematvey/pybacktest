@@ -165,7 +165,6 @@ class Backtest(object):
         print yaml.dump(self.report, allow_unicode=True,
                         default_flow_style=False)
         print '-' * len(s)
-        #print '=' * len(s)
 
     def plot_equity(self, subset=None):
         if subset is None:
@@ -175,9 +174,9 @@ class Backtest(object):
         eq.plot(color='red', label='strategy')
         ix = self.ohlc.ix[eq.index[0]:eq.index[-1]].index
         price = self.ohlc.C
-        (price[ix] - price[ix][0]).plot(color='black', alpha=0.5,
-                                        label='underlying')
-        pylab.legend(loc='upper left')
+        (price[ix] - price[ix][0]).resample('W', how='first').dropna()\
+            .plot(color='black', alpha=0.5, label='underlying')
+        pylab.legend(loc='best')
         pylab.title('%s\nEquity' % self)
 
     def plot_trades(self, subset=None):
@@ -197,6 +196,7 @@ class Backtest(object):
         pylab.plot(sx.index, sx.values, 'o', color='red', markersize=7,
                    label='short exit')
         eq = self.equity.ix[subset].cumsum()
-        (eq + self.ohlc.O[eq.index[0]]).plot(color='red', style='-')
-        self.ohlc.O.ix[subset].plot(color='black', label='price')
+        ix = eq.index
+        (eq + self.ohlc.O[ix[0]]).plot(color='red', style='-')
+        self.ohlc.O.ix[ix].plot(color='black', label='price')
         pylab.title('%s\nTrades for %s' % (self, subset))
