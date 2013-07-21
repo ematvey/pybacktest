@@ -26,7 +26,7 @@ maxdd = lambda eqd: (eqd.cumsum() - pandas.expanding_max(eqd.cumsum())).abs().ma
 rf = RF = lambda eqd: eqd.sum() / maxdd(eqd)
 sharpe = lambda eqd: eqd.mean() / eqd.std()
 sortino = lambda eqd: eqd.mean() / eqd[eqd < 0].std()
-trades_total = lambda eqd: len(eqd[eqd != 0])
+trades = lambda eqd: len(eqd[eqd != 0])
 
 def ulcer(eqd):
     eq = eqd.cumsum()

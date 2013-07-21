@@ -30,7 +30,7 @@ class StatEngine(object):
             except:
                 return
         else:
-            return Object.__getitem__(self, attr)
+            raise IndexError("Calculation of '%s' statistic is not supported" % attr)
 
 
 class Backtest(object):
