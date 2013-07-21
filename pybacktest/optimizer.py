@@ -5,7 +5,7 @@
 ''' Optimizer class '''
 
 from cached_property import cached_property
-import pybacktest
+from . import Backtest
 import itertools
 import pandas
 import numpy
@@ -32,7 +32,7 @@ class Optimizer(object):
         cartesian = [numpy.arange(p[k][0], p[k][1]+.000001, p[k][2]) for k in pn]
         for pvals in itertools.product(*cartesian):
             pset = dict(zip(pn, pvals))
-            bt = pybacktest.Backtest(self.strategy_fn(self.ohlc, **pset))
+            bt = Backtest(self.strategy_fn(self.ohlc, **pset))
             r = {}
             for m in self.metrics:
                 r[m] = getattr(bt.stats, m)
