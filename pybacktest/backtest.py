@@ -198,5 +198,6 @@ class Backtest(object):
         eq = self.equity.ix[subset].cumsum()
         ix = eq.index
         (eq + self.ohlc.O[ix[0]]).plot(color='red', style='-')
-        self.ohlc.O.ix[ix[0]:ix[-1]].plot(color='black', label='price')
+        #self.ohlc.O.ix[ix[0]:ix[-1]].plot(color='black', label='price')
+        self.ohlc.O.ix[subset].plot(color='black', label='price')
         pylab.title('%s\nTrades for %s' % (self, subset))
