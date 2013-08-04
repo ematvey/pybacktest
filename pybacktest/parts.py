@@ -25,15 +25,15 @@ def signals_to_positions(signals, init_pos=0,
     for t, sig in signals.iterrows():
         # check exit signals
         if pos != 0:  # if in position
-            if pos > 0 and sig[long_ex]:  # if exit long signal
+            if pos > 0 and sig[long_ex] == True:  # if exit long signal
                 pos -= sig[long_ex]
-            elif pos < 0 and sig[short_ex]:  # if exit short signal
+            elif pos < 0 and sig[short_ex] == True:  # if exit short signal
                 pos += sig[short_ex]
         # check entry (possibly right after exit)
         if pos == 0:
-            if sig[long_en]:
+            if sig[long_en] == True:
                 pos += sig[long_en]
-            elif sig[short_en]:
+            elif sig[short_en] == True:
                 pos -= sig[short_en]
         ps[t] = pos
     return ps[ps != ps.shift()]
