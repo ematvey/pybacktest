@@ -19,6 +19,6 @@ setup(name='pybacktest',
   author='Matvey Ezhov',
   url='https://github.com/ematvey/pybacktest',
   packages=['pybacktest'],
-  install_requires=['numpy', 'scipy', 'pandas>=0.11', 'pyyaml'],
+  install_requires=['numpy', 'pandas>=0.11', 'pyyaml'],
   **extra_args
 )
