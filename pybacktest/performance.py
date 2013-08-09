@@ -59,7 +59,7 @@ def performance_summary(equity_diffs, quantile=0.99, precision=4):
     def force_quantile(series, q):
         return sorted(series.values)[int(len(series) * q)]
     eqd = equity_diffs[equity_diffs != 0]
-    if not eqd.index.tz is None:
+    if getattr(eqd.index, 'tz', None) is not None:
         eqd = eqd.tz_convert(None)
     if len(eqd) == 0:
         return {}
