@@ -2,11 +2,13 @@ import pandas
 import sys
 from . import Backtest
 
+
 def iter_verify(strategy_fn, data, window_size):
     '''
     Verify vectorized pandas backtest iteratively by running it
     in sliding window, bar-by-bar.
 
+    NOTE: depreciated, use `verify` now.
     '''
     sp = None
     mis_cur = {}
@@ -32,3 +34,35 @@ def iter_verify(strategy_fn, data, window_size):
         return df
     else:
         return 'valid'
+
+
+
+def frontal_iterative_signals(strategy_fn, data, window_size, verbose=True):
+    front = []
+    p_prg = None
+    for i in xrange(window_size, len(data)):
+        data_subset = data.iloc[i - window_size : i]
+        last_sig = Backtest(strategy_fn(data_subset)).signals.iloc[-1]
+        front.append(last_sig)
+        if verbose:
+            prg = round(((float(i) - window_size) / (len(data) - window_size)) * 100, 1)
+            if p_prg != prg:
+                sys.stdout.write(' \r%s%% done' % prg)
+                sys.stdout.flush()
+                p_prg = prg
+    return pandas.DataFrame(front)
+
+def verify(strategy_fn, data, window_size, verbose=True):
+    '''
+    Verify vectorized pandas backtest iteratively by running it
+    in sliding window, bar-by-bar.
+    '''
+    fsig = frontal_iterative_signals(strategy_fn, data, window_size, verbose)
+    bsig = Backtest(strategy_fn(data)).signals.reindex(fsig.index)
+    comp = fsig.ix[(fsig == bsig).T.all() == False]
+    if len(comp) != 0:
+        print '\nverification did not pass'
+        print 'returning dataframe with mismatches'
+        return comp
+    else:
+        print '\nverification passed'
