@@ -52,6 +52,7 @@ def frontal_iterative_signals(strategy_fn, data, window_size, verbose=True):
                 p_prg = prg
     return pandas.DataFrame(front)
 
+
 def verify(strategy_fn, data, window_size, verbose=True):
     '''
     Verify vectorized pandas backtest iteratively by running it
@@ -61,8 +62,10 @@ def verify(strategy_fn, data, window_size, verbose=True):
     bsig = Backtest(strategy_fn(data)).signals.reindex(fsig.index)
     comp = fsig.ix[(fsig == bsig).T.all() == False]
     if len(comp) != 0:
-        print '\nverification did not pass'
-        print 'returning dataframe with mismatches'
+        if verbose:
+            sys.stdout.write('\rverification did not pass\nreturning dataframe with mismatches')
+            sys.stdout.flush()
         return comp
-    else:
-        print '\nverification passed'
+    elif verbose:
+        sys.stdout.flush()
+        sys.stdout.write('\rverification passed')
