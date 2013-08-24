@@ -72,13 +72,11 @@ class Optimizer(object):
             except KeyboardInterrupt:
                 pool.close()
                 pool.join()
-
         else:
             results = []
             for a in args_gen:
                 results.append(_embedded_backtest(a))
 
-        print results
         return pandas.DataFrame(results)
 
     def best_by(self, name, depth=20):
