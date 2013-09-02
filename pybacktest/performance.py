@@ -24,9 +24,17 @@ payoff = lambda eqd: eqd[eqd > 0].mean() / -eqd[eqd < 0].mean()
 pf = PF = lambda eqd: abs(eqd[eqd > 0].sum() / eqd[eqd < 0].sum())
 maxdd = lambda eqd: (eqd.cumsum() - pandas.expanding_max(eqd.cumsum())).abs().max()
 rf = RF = lambda eqd: eqd.sum() / maxdd(eqd)
-sharpe = lambda eqd: eqd.mean() / eqd.std()
-sortino = lambda eqd: eqd.mean() / eqd[eqd < 0].std()
 trades = lambda eqd: len(eqd[eqd != 0])
+
+_days = lambda eqd: eqd.resample('D', how='sum').dropna()
+def sharpe(eqd):
+    ''' daily sharpe ratio '''
+    d = _days(eqd)
+    return (d.mean() / d.std()) ** (252**0.5)
+def sortino(eqd):
+    ''' daily sortino ratio '''
+    d = _days(eqd)
+    return (d.mean() / d[d < 0]).std()
 
 def ulcer(eqd):
     eq = eqd.cumsum()
