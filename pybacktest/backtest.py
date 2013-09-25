@@ -34,15 +34,15 @@ class StatEngine(object):
 
 
 class Backtest(object):
-    '''
+    """
     Backtest (Pandas implementation of vectorized backtesting).
 
-    Lazily attemts to extract multiple pandas.Series with signals and prices
+    Lazily attempts to extract multiple pandas.Series with signals and prices
     from a given namespace and combine them into equity curve.
 
     Attempts to be as smart as possible.
 
-    '''
+    """
 
     _ohlc_possible_fields = ('ohlc', 'bars', 'ohlcv')
     _sig_mask_int = ('Buy', 'Sell', 'Short', 'Cover')
@@ -52,7 +52,7 @@ class Backtest(object):
                  signal_fields=('buy', 'sell', 'short', 'cover'),
                  price_fields=('buyprice', 'sellprice', 'shortprice',
                                'coverprice')):
-        '''
+        """
         Arguments:
 
         *dataobj* should be dict-like structure containing signal series.
@@ -77,7 +77,7 @@ class Backtest(object):
 
         To get a hang of it, check out the examples.
 
-        '''
+        """
         self._dataobj = dict([(k.lower(), v) for k, v in dataobj.iteritems()])
         self._sig_mask_ext = signal_fields
         self._pr_mask_ext = price_fields
@@ -157,8 +157,7 @@ class Backtest(object):
 
     def summary(self):
         import yaml
-
-        s = '|  %s performance summary  |' % self
+        s = '|  %s  |' % self
         print '-' * len(s)
         print s
         print '-' * len(s), '\n'

@@ -2,7 +2,7 @@
 
 # part of pybacktest package: https://github.com/ematvey/pybacktest
 
-''' Optimizer class '''
+""" Optimizer class """
 
 from cached_property import cached_property
 from . import Backtest
@@ -25,7 +25,6 @@ class Optimizer(object):
 
     @cached_property(ttl=0)
     def results(self):
-        print '[ running optimization, please wait ]'
         p = self.params
         pn = p.keys()
         results = []

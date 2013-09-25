@@ -33,6 +33,7 @@ def ExRem(array1, array2):
         i += 1
     return array.fillna(value=False)
 
+
 def BarsSince(x):
     """ Counts number of periods since last True occured.
 
@@ -46,6 +47,7 @@ def BarsSince(x):
     cs = ret.cumsum()
     return cs - cs[x].reindex(cs.index).ffill()
 
+
 def TimeNum(x):
     """ Returns timecode for each element.
     
@@ -55,6 +57,7 @@ def TimeNum(x):
     """
     timecode = map(lambda x: x.hour * 10000 + x.minute * 100 + x.second, map(lambda x: x.time(), x.index))
     return pandas.Series(timecode, index=x.index)
+
 
 def DateNum(x):
     """ Returns datecode for each element.
