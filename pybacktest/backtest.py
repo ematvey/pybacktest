@@ -85,11 +85,11 @@ class Backtest(object):
         self.trdplot = self.sigplot = parts.Slicer(self.plot_trades,
                                                    obj=self.ohlc)
         self.eqplot = parts.Slicer(self.plot_equity, obj=self.ohlc)
-        self.run_time = time.strftime('%Y-%d-%m %H:%M:%S %Z', time.localtime())
+        self.run_time = time.strftime('%Y-%d-%m %H:%M %Z', time.localtime())
         self.stats = StatEngine(lambda: self.equity)
 
     def __repr__(self):
-        return "Backtest('%s', %s)" % (self.name, self.run_time)
+        return "Backtest(%s, %s)" % (self.name, self.run_time)
 
     @property
     def dataobj(self):
