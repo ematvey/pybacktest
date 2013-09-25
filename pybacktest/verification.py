@@ -4,16 +4,15 @@ from . import Backtest
 
 
 def iter_verify(strategy_fn, data, window_size):
-    '''
+    """
     Verify vectorized pandas backtest iteratively by running it
     in sliding window, bar-by-bar.
 
     NOTE: depreciated, use `verify` now.
-    '''
+    """
     sp = None
     mis_cur = {}
     mis_prev = {}
-    prg_d = 0.
     print 'iterative verification'
     for i in range(window_size, len(data)):
         s = Backtest(strategy_fn(data.iloc[i-window_size:i])).signals
@@ -36,7 +35,6 @@ def iter_verify(strategy_fn, data, window_size):
         return 'valid'
 
 
-
 def frontal_iterative_signals(strategy_fn, data, window_size, verbose=True):
     front = []
     p_prg = None
@@ -54,10 +52,10 @@ def frontal_iterative_signals(strategy_fn, data, window_size, verbose=True):
 
 
 def verify(strategy_fn, data, window_size, verbose=True):
-    '''
+    """
     Verify vectorized pandas backtest iteratively by running it
     in sliding window, bar-by-bar.
-    '''
+    """
     fsig = frontal_iterative_signals(strategy_fn, data, window_size, verbose)
     bsig = Backtest(strategy_fn(data)).signals.reindex(fsig.index)
     comp = fsig.ix[(fsig == bsig).T.all() == False]

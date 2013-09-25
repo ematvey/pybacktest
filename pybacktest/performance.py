@@ -28,20 +28,24 @@ sharpe = lambda eqd: eqd.mean() / eqd.std()
 sortino = lambda eqd: eqd.mean() / eqd[eqd < 0].std()
 trades = lambda eqd: len(eqd[eqd != 0])
 
+
 def ulcer(eqd):
     eq = eqd.cumsum()
     return (((eq - pandas.expanding_max(eq)) ** 2).sum() / len(eq)) ** 0.5
 
-def UPI(eqd, risk_free=0):
+
+def upi(eqd, risk_free=0):
     eq = eqd[eqd != 0]
     return (eq.mean() - risk_free) / ulcer(eq)
-upi = UPI
+UPI = upi
 
-def MPI(eqd):
-    ''' Modified UPI, with enumerator resampled to months (to be able to
-    compare short- to medium-term strategies with different trade frequencies. '''
+
+def mpi(eqd):
+    """ Modified UPI, with enumerator resampled to months (to be able to
+    compare short- to medium-term strategies with different trade frequencies. """
     return eqd.resample('M', how='sum').mean() / ulcer(eqd)
-mpi = MPI
+MPI = mpi
+
 
 def mcmdd(eqd, runs=1000, quantile=0.99, array=False):
     maxdds = [maxdd(eqd.take(numpy.random.permutation(len(eqd)))) for i in xrange(runs)]
@@ -49,6 +53,7 @@ def mcmdd(eqd, runs=1000, quantile=0.99, array=False):
         return pandas.Series(maxdds).quantile(quantile)
     else:
         return maxdds
+
 
 def holding_periods(eqd):
     # rather crude, but will do
@@ -97,7 +102,7 @@ def performance_summary(equity_diffs, quantile=0.99, precision=4):
             'sharpe': round(eqd.mean() / eqd.std(), precision),
             'sortino': round(eqd.mean() / eqd[eqd < 0].std(), precision),
             'maxdd': round(maxdd(eqd), precision),
-            'WCDD (monte-carlo %s quantile)' % quantile : round(mcmdd(eqd, quantile=quantile), precision),
+            'WCDD (monte-carlo %s quantile)' % quantile: round(mcmdd(eqd, quantile=quantile), precision),
             'UPI': round(UPI(eqd), precision),
             'MPI': round(MPI(eqd), precision),
             }
