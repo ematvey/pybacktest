@@ -32,7 +32,7 @@ def iter_verify(strategy_fn, data, window_size):
     if len(df):
         return df
     else:
-        return 'valid'
+        print 'valid'
 
 
 def frontal_iterative_signals(strategy_fn, data, window_size, verbose=True):
