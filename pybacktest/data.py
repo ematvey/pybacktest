@@ -4,7 +4,8 @@
 
 """ Set of data-loading helpers """
 
-import pandas
+import pandas as pd
+import pandas.io.data as web
 
 
 def load_from_yahoo(ticker='SPY', start='1900', adjust_close=False):
@@ -17,12 +18,12 @@ def load_from_yahoo(ticker='SPY', start='1900', adjust_close=False):
     Defaults are in place for convenience. """
 
     if isinstance(ticker, list):
-        return pandas.Panel(
+        return pd.Panel(
             {t: load_from_yahoo(
                 ticker=t, start=start, adjust_close=adjust_close)
              for t in ticker})
 
-    data = pandas.io.data.DataReader(ticker, data_source='yahoo', start=start)
+    data = web.DataReader(ticker, data_source='yahoo', start=start)
     data = data.rename(columns={'Open': 'O', 'High': 'H', 'Low': 'L',
                                 'Close': 'C', 'Adj Close': 'AC',
                                 'Volume': 'V'})
