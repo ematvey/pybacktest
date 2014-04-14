@@ -26,15 +26,15 @@ def signals_to_positions(signals, init_pos=0,
     for t, sig in signals.iterrows():
         # check exit signals
         if pos != 0:  # if in position
-            if pos > 0 and sig[long_ex] is True:  # if exit long signal
+            if pos > 0 and sig[long_ex]:  # if exit long signal
                 pos -= sig[long_ex]
-            elif pos < 0 and sig[short_ex] is True:  # if exit short signal
+            elif pos < 0 and sig[short_ex]:  # if exit short signal
                 pos += sig[short_ex]
         # check entry (possibly right after exit)
         if pos == 0:
-            if sig[long_en] is True:
+            if sig[long_en]:
                 pos += sig[long_en]
-            elif sig[short_en] is True:
+            elif sig[short_en]:
                 pos -= sig[short_en]
         ps[t] = pos
     return ps[ps != ps.shift()]
@@ -71,5 +71,6 @@ class Slicer(object):
     def __init__(self, target, obj):
         self.target = target
         self.__len__ = obj.__len__
+
     def __getitem__(self, x):
         return self.target(x)
