@@ -3,7 +3,6 @@
 # part of pybacktest package: https://github.com/ematvey/pybacktest
 
 import pandas
-import pylab
 import time
 
 from . import parts, performance
@@ -14,13 +13,15 @@ from .cached_property import cached_property
 __all__ = ['Backtest']
 
 
-
 class StatEngine(object):
+
     def __init__(self, equity_fn):
         self._stats = [i for i in dir(performance) if not i.startswith('_')]
         self._equity_fn = equity_fn
+
     def __dir__(self):
         return dir(type(self)) + self._stats
+
     def __getattr__(self, attr):
         if attr in self._stats:
             equity = self._equity_fn()
@@ -30,10 +31,12 @@ class StatEngine(object):
             except:
                 return
         else:
-            raise IndexError("Calculation of '%s' statistic is not supported" % attr)
+            raise IndexError(
+                "Calculation of '%s' statistic is not supported" % attr)
 
 
 class Backtest(object):
+
     """
     Backtest (Pandas implementation of vectorized backtesting).
 
@@ -107,13 +110,13 @@ class Backtest(object):
 
     @cached_property(ttl=0)
     def default_price(self):
-        return self.ohlc.O#.shift(-1)
+        return self.ohlc.O  # .shift(-1)
 
     @cached_property(ttl=0)
     def trade_price(self):
         pr = self.prices
         if pr is None:
-            return self.ohlc.O#.shift(-1)
+            return self.ohlc.O  # .shift(-1)
         dp = pandas.Series(dtype=float, index=pr.index)
         for pf, sf in zip(self._pr_mask_int, self._sig_mask_int):
             s = self.signals[sf]
@@ -128,7 +131,8 @@ class Backtest(object):
 
     @cached_property(ttl=0)
     def trades(self):
-        p = self.positions.reindex(self.signals.index).ffill().shift().fillna(value=0)
+        p = self.positions.reindex(
+            self.signals.index).ffill().shift().fillna(value=0)
         p = p[p != p.shift()]
         tp = self.trade_price
         assert p.index.tz == tp.index.tz, "Cant operate on singals and prices "\
@@ -175,6 +179,8 @@ class Backtest(object):
         price = self.ohlc.C
         (price[ix] - price[ix][0]).resample('W', how='first').dropna()\
             .plot(color='black', alpha=0.5, label='underlying')
+
+        import matplotlib.pylab as pylab
         pylab.legend(loc='best')
         pylab.title('%s\nEquity' % self)
 
@@ -186,6 +192,8 @@ class Backtest(object):
         se = fr.price[(fr.pos < 0) & (fr.vol < 0)]
         lx = fr.price[(fr.pos.shift() > 0) & (fr.vol < 0)]
         sx = fr.price[(fr.pos.shift() < 0) & (fr.vol > 0)]
+
+        import matplotlib.pylab as pylab
         pylab.plot(le.index, le.values, '^', color='lime', markersize=12,
                    label='long enter')
         pylab.plot(se.index, se.values, 'v', color='red', markersize=12,

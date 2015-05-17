@@ -18,9 +18,7 @@ def signals_to_positions(signals, init_pos=0,
     WARNING: In production, override default zero value in init_pos with
     extreme caution.
     """
-    long_en, long_ex, short_en, short_ex = mask  # long enter, long
-                                                 # exit, short enter,
-                                                 # short exit
+    long_en, long_ex, short_en, short_ex = mask
     pos = init_pos
     ps = pandas.Series(0., index=signals.index)
     for t, sig in signals.iterrows():
@@ -44,7 +42,16 @@ def trades_to_equity(trd):
     """
     Convert trades dataframe (cols [vol, price, pos]) to equity diff series
     """
-    psig = trd.pos.apply(lambda x: cmp(x, 0))
+
+    def _cmp_fn(x):
+        if x > 0:
+            return 1
+        elif x < 0:
+            return -1
+        else:
+            return 0
+
+    psig = trd.pos.apply(_cmp_fn)
     closepoint = psig != psig.shift()
     e = (trd.vol * trd.price).cumsum()[closepoint] - \
         (trd.pos * trd.price)[closepoint]
