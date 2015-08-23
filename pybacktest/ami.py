@@ -26,7 +26,7 @@ def ExRem(array1, array2):
     while i < len(array1):
         if array1[i]:
             array[i] = True
-            for j in xrange(i, len(array2)):
+            for j in range(i, len(array2)):
                 if array2[j]:
                     break
             i = j

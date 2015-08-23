@@ -91,11 +91,6 @@ def performance_summary(equity_diffs, quantile=0.99, precision=4):
             'trades/month': round(eqd.groupby(
                     lambda x: (x.year, x.month)
                     ).apply(lambda x: x[x != 0].count()).mean(), precision),
-            #'holding periods': {
-            #    'max': str(hold.max()),
-            #    'median': str(force_quantile(hold, 0.5)),
-            #    'min': str(hold.min()),
-            #    }
             },
         'performance': {
             'profit': round(eqd.sum(), precision),
