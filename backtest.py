@@ -1,62 +1,13 @@
+import numpy
 import pandas
-
-
-class MarketData(object):
-    class MarketDataValueError(ValueError):
-        pass
-
-    OPEN_PRICE_NAMES = ['open', 'Open', 'O', 'o']
-    HIGH_PRICE_NAMES = ['high', 'High', 'H', 'h']
-    LOW_PRICE_NAMES = ['low', 'Low', 'L', 'l']
-    CLOSE_PRICE_NAMES = ['close', 'Close', 'C', 'c']
-
-    def __init__(self, data):
-        self.data = data
-        self.open_price_column = None
-        self.high_price_column = None
-        self.low_price_column = None
-        self.close_price_column = None
-        if isinstance(data, pandas.DataFrame):
-            for price in self.OPEN_PRICE_NAMES:
-                if price in data.columns:
-                    self.open_price_column = price
-            for price in self.HIGH_PRICE_NAMES:
-                if price in data.columns:
-                    self.high_price_column = price
-            for price in self.LOW_PRICE_NAMES:
-                if price in data.columns:
-                    self.low_price_column = price
-            for price in self.CLOSE_PRICE_NAMES:
-                if price in data.columns:
-                    self.close_price_column = price
-
-    @property
-    def open(self):
-        if self.open_price_column is None:
-            raise self.MarketDataValueError('Open price is not found')
-        return self.data[self.open_price_column]
-
-    @property
-    def high(self):
-        if self.high_price_column is None:
-            raise self.MarketDataValueError('High price is not found')
-        return self.data[self.high_price_column]
-
-    @property
-    def low(self):
-        if self.low_price_column is None:
-            raise self.MarketDataValueError('Low price is not found')
-        return self.data[self.low_price_column]
-
-    @property
-    def close(self):
-        if self.close_price_column is None:
-            raise self.MarketDataValueError('Close price is not found')
-        return self.data[self.close_price_column]
 
 
 class BacktestError(Exception):
     pass
+
+
+def dummy_signals_to_positions(signals):
+    return signals
 
 
 def type1_signals_to_positions(signals):
@@ -128,51 +79,72 @@ def type2_signals_to_positions(signals):
     return p
 
 
-def execute(price, positions):
-    result = pandas.DataFrame()
-    trades = positions.diff().fillna(value=0)
+def select_signal_extractor(signals):
+    """ Create singal-to-position converter function
+    """
+    if isinstance(signals, pandas.Series):
 
-    # efficient way to calculate equity curve
-    equity_curve = (positions * price) - (trades * price).cumsum()
+        # option 1: positions
+        return dummy_signals_to_positions
 
+    elif isinstance(signals, (dict, pandas.DataFrame)):
+
+        # option 2: full spec with entries/exists (type 1 signals)
+        if 'long_entry' in signals or 'short_entry' in signals:
+            return type1_signals_to_positions
+
+        # option 3: separate long/short positions (type 2 signals)
+        elif 'long' in signals or 'short' in signals:
+            return type2_signals_to_positions
+
+
+def fast_execute(price, positions):
+    """ Fast vectorized execute. Works with standard position/fixed-price
+        market order entries, but not with conditional trades like stops or
+        limit orders.
+    """
     # find trade end points
     long_close = (positions <= 0) & (positions > 0).shift()
     short_close = (positions >= 0) & (positions < 0).shift()
     crosspoint = long_close | short_close
+    crosspoint[0] = True
 
-    trade_equity = equity_curve[crosspoint].diff().dropna()
+    # efficient way to calculate equity curve
+    returns_at_crosspoints = price[crosspoint].pct_change().dropna()
 
-    result['equity'] = equity_curve.diff().fillna(value=0)
-    result['long_equity'] = trade_equity[long_close]
-    result['short_equity'] = trade_equity[short_close]
-
-    return result
+    result = pandas.DataFrame()
+    result['equity'] = (price.pct_change() * positions.shift())
+    result['long_equity'] = returns_at_crosspoints[long_close]
+    result['short_equity'] = -returns_at_crosspoints[short_close]
+    return result.fillna(value=0)
 
 
 def trade_on_current_close(data, positions):
-    return execute(data.close, positions)
+    return fast_execute(data['close'], positions)
+
+
+def trade_on_next_close(data, positions):
+    return fast_execute(data['close'].shift(-1), positions)
 
 
 def trade_on_next_open(data, positions):
-    return execute(data.open.shift(-1), positions)
+    return fast_execute(data['open'].shift(-1), positions)
 
 
 class Backtest(object):
-    def __init__(self, data, strategy, name=None, execution=trade_on_current_close):
+    def __init__(self, data, strategy, name=None, execution=trade_on_current_close, extractor=None):
         self.name = name
-        if not isinstance(data, MarketData):
-            data = MarketData(data)
         self.data = data
-        self.strategy = strategy
-        self.signals = signals = strategy(data)
-        self.positions = None
-        if isinstance(signals, pandas.Series):
-            self.positions = signals
-        elif isinstance(signals, (dict, pandas.DataFrame)):
-            if 'long_entry' in signals or 'short_entry' in signals:
-                self.positions = type1_signals_to_positions(signals)
-            elif 'long' in signals or 'short' in signals:
-                self.positions = type2_signals_to_positions(signals)
+
+        if callable(strategy):
+            self.signals = strategy(data)
+        else:
+            self.signals = strategy
+
+        if extractor is None:
+            extractor = select_signal_extractor(self.signals)
+        self.positions = extractor(self.signals)
+
         if self.positions is None:
             raise BacktestError('incorrect *signals*')
         self.result = execution(self.data, self.positions)

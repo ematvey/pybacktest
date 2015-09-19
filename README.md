@@ -8,20 +8,19 @@ This package has long been abandoned, but now I am planning to move it to versio
  - Order type specification. Currently there are two ways to specify backtest: simply pass signals and get next-bar-market-on-open backtest, or add trade prices and get stop order-like execution, but without proper possibility of trade checking. You will still be able to do these things, with added option to futher customize execution and simulate more production-like environment.
 
 ### About
-It allows user to specify trading strategies using full power of pandas, at the same time hiding all boring things like manually calculating trades, equity, performance statistics and creating visualizations. Resulting strategy code is usable both in research and production setting.
+It allows user to specify trading strategies using full power of pandas while hiding all the plumbing. Resulting strategy code can be used both in research and production setting.
 
-Strategies could be defined as simple this:
+Strategies could be tested as simple this:
 ```python
-ms = pandas.rolling_mean(ohlc.C, 50)
-ml = pandas.rolling_mean(ohlc.C, 100)
-buy = cover = (ms > ml) & (ms.shift() < ml.shift())
-sell = short = (ms < ml) & (ms.shift() > ml.shift())
+def strategy(data):
+    ms = pandas.rolling_mean(data.close, 50)
+    ml = pandas.rolling_mean(data.close, 100)
+    return {
+        'long_entry': (ms > ml) & (ms.shift() < ml.shift()),
+        'short_entry': (ms < ml) & (ms.shift() > ml.shift()),
+    }
+backtest = pybacktest.Backtest(data, strategy)
 ```
-
-And then tested like this:
-`pybacktest.Backtest(locals())`
-
-We use it in our research and production operations.
 
 ## Installation
 ```
