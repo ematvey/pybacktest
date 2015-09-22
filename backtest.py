@@ -1,4 +1,3 @@
-import numpy
 import pandas
 
 
@@ -110,29 +109,20 @@ def fast_execute(price, positions):
     crosspoint[0] = True
 
     # efficient way to calculate equity curve
-    returns_at_crosspoints = price[crosspoint].pct_change().dropna()
+    strategy_equity = (price.pct_change() * positions.shift())
+
+    trade_returns = (strategy_equity + 1).cumprod()[crosspoint].pct_change().dropna()
 
     result = pandas.DataFrame()
-    result['equity'] = (price.pct_change() * positions.shift())
-    result['long_equity'] = returns_at_crosspoints[long_close]
-    result['short_equity'] = -returns_at_crosspoints[short_close]
-    return result.fillna(value=0)
-
-
-def trade_on_current_close(data, positions):
-    return fast_execute(data['close'], positions)
-
-
-def trade_on_next_close(data, positions):
-    return fast_execute(data['close'].shift(-1), positions)
-
-
-def trade_on_next_open(data, positions):
-    return fast_execute(data['open'].shift(-1), positions)
+    result['equity'] = strategy_equity.fillna(value=0)
+    result['trade_equity'] = trade_returns
+    result['long_equity'] = trade_returns[long_close]
+    result['short_equity'] = trade_returns[short_close]
+    return result
 
 
 class Backtest(object):
-    def __init__(self, data, strategy, name=None, execution=trade_on_current_close, extractor=None):
+    def __init__(self, data, strategy, name=None, extractor=None):
         self.name = name
         self.data = data
 
@@ -147,4 +137,4 @@ class Backtest(object):
 
         if self.positions is None:
             raise BacktestError('incorrect *signals*')
-        self.result = execution(self.data, self.positions)
+        self.result = fast_execute(self.data['trade_price'], self.positions)
