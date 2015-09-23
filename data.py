@@ -4,7 +4,6 @@
 
 """ Set of data-loading helpers """
 
-import pandas
 from pandas.io.data import get_data_yahoo
 
 
@@ -18,6 +17,8 @@ def load_from_yahoo(ticker='SPY', start='1900'):
     data = data.rename(columns={'Open': 'open', 'High': 'high', 'Low': 'low',
                                 'Close': 'close', 'Volume': 'volume'})
     adj = data['Adj Close'] / data['close']
-    data[['open', 'high', 'low', 'close']] *= adj
+    # import IPython; IPython.embed()
+    for col in ['open', 'high', 'low', 'close']:
+        data[col] *= adj
     data = data.drop('Adj Close', axis=1)
     return data

@@ -98,26 +98,31 @@ def select_signal_extractor(signals):
 
 
 def fast_execute(price, positions):
-    """ Fast vectorized execute. Works with standard position/fixed-price
-        market order entries, but not with conditional trades like stops or
-        limit orders.
+    """ Fast vectorized execute.
+
+        Works with standard position/fixed-price market order entries,
+        but not with conditional trades like stops or limit orders.
     """
+
     # find trade end points
     long_close = (positions <= 0) & (positions > 0).shift()
     short_close = (positions >= 0) & (positions < 0).shift()
     crosspoint = long_close | short_close
     crosspoint[0] = True
+    crosspoint[1] = True
 
     # efficient way to calculate equity curve
-    strategy_equity = (price.pct_change() * positions.shift())
+    strategy_returns = (price.pct_change() * positions.shift())
 
-    trade_returns = (strategy_equity + 1).cumprod()[crosspoint].pct_change().dropna()
+    trade_returns = (strategy_returns + 1).cumprod()[crosspoint].pct_change().dropna()
 
     result = pandas.DataFrame()
-    result['equity'] = strategy_equity.fillna(value=0)
+    result['equity'] = strategy_returns.fillna(value=0)
     result['trade_equity'] = trade_returns
     result['long_equity'] = trade_returns[long_close]
     result['short_equity'] = trade_returns[short_close]
+    result['positions'] = positions
+    result['crosspoint'] = crosspoint.astype(int)
     return result
 
 
@@ -137,4 +142,6 @@ class Backtest(object):
 
         if self.positions is None:
             raise BacktestError('incorrect *signals*')
+
+        # self.positions[-1] = 0
         self.result = fast_execute(self.data['trade_price'], self.positions)
