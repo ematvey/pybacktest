@@ -1,147 +1,113 @@
 import pandas
+from abc import abstractmethod
+
+from pybacktest.logic import fast_execute, type1_signals_to_positions, \
+    type2_signals_to_positions, dummy_signals_to_positions
+
+
+def signals_to_positions(signals):
+    """ Process signals to get positions using different signal-to-positions processing modes
+    """
+    if isinstance(signals, pandas.Series):
+        # option 1: positions
+        return signals
+    elif isinstance(signals, (dict, pandas.DataFrame)):
+        # option 2: full spec with entries/exists (type 1 signals)
+        if 'long_entry' in signals or 'short_entry' in signals:
+            return type1_signals_to_positions(signals)
+        # option 3: separate long/short positions (type 2 signals)
+        elif 'long' in signals or 'short' in signals:
+            return type2_signals_to_positions(signals)
+    raise BacktestError('signals are in unknown form, cannot select processor')
 
 
 class BacktestError(Exception):
     pass
 
 
-def dummy_signals_to_positions(signals):
-    return signals
-
-
-def type1_signals_to_positions(signals):
-    long_entry = signals.get('long_entry')
-    short_entry = signals.get('short_entry')
-    long_exit = signals.get('long_exit')
-    short_exit = signals.get('short_exit')
-
-    assert long_entry is not None or short_entry is not None
-    if long_entry is not None and short_entry is not None:
-        assert long_entry.index.equals(short_entry.index)
-    if long_entry is not None and long_entry.dtype != bool:
-        raise BacktestError("long_entry dtype != bool (use X.astype('bool')")
-    if short_entry is not None and short_entry.dtype != bool:
-        raise BacktestError("short_entry dtype != bool (use X.astype('bool')")
-    if long_exit is not None:
-        assert long_exit.index.equals(long_entry.index)
-        if long_exit.dtype != bool:
-            raise BacktestError("long_exit dtype != bool (use X.astype('bool')")
-    if short_exit is not None:
-        assert short_exit.index.equals(short_entry.index)
-        if short_exit.dtype != bool:
-            raise BacktestError("short_exit dtype != bool (use X.astype('bool')")
-
-    p = None
-    if long_entry is not None:
-        l = pandas.Series(index=long_entry.index, dtype='float')
-        l.ix[long_entry] = 1.0
-        if long_exit is not None:
-            l.ix[long_exit] = 0.0
-        if short_entry is not None:
-            l.ix[short_entry] = 0.0
-        p = l.ffill()
-    if short_entry is not None:
-        s = pandas.Series(index=long_entry.index, dtype='float')
-        s.ix[short_entry] = -1.0
-        if short_exit is not None:
-            s.ix[short_exit] = 0.0
-        if long_entry is not None:
-            s.ix[long_entry] = 0.0
-
-        if p is None:
-            p = s.ffill()
-        else:
-            p = p + s.ffill()
-    p = p.fillna(value=0.0)
-    return p
-
-
-def type2_signals_to_positions(signals):
-    long_pos = signals.get('long')
-    short_pos = signals.get('short')
-    assert long_pos is not None or short_pos is not None
-    p = None
-    if long_pos is not None:
-        assert long_pos.dtype == bool
-        l = pandas.Series(index=long_pos.index, dtype='float')
-        l.ix[long_pos] = 1.0
-        p = l.fillna(value=0.0)
-    if short_pos is not None:
-        assert short_pos.dtype == bool
-        s = pandas.Series(index=long_pos.index, dtype='float')
-        s.ix[short_pos] = -1.0
-        if p is None:
-            p = s
-        else:
-            p = p + s.fillna(value=0.0)
-    p = p.fillna(value=0.0)
-    return p
-
-
-def select_signal_extractor(signals):
-    """ Create singal-to-position converter function
-    """
-    if isinstance(signals, pandas.Series):
-
-        # option 1: positions
-        return dummy_signals_to_positions
-
-    elif isinstance(signals, (dict, pandas.DataFrame)):
-
-        # option 2: full spec with entries/exists (type 1 signals)
-        if 'long_entry' in signals or 'short_entry' in signals:
-            return type1_signals_to_positions
-
-        # option 3: separate long/short positions (type 2 signals)
-        elif 'long' in signals or 'short' in signals:
-            return type2_signals_to_positions
-
-
-def fast_execute(price, positions):
-    """ Fast vectorized execute.
-
-        Works with standard position/fixed-price market order entries,
-        but not with conditional trades like stops or limit orders.
-    """
-
-    # find trade end points
-    long_close = (positions <= 0) & (positions > 0).shift()
-    short_close = (positions >= 0) & (positions < 0).shift()
-    crosspoint = long_close | short_close
-    crosspoint[0] = True
-    crosspoint[1] = True
-
-    # efficient way to calculate equity curve
-    strategy_returns = (price.pct_change() * positions.shift())
-
-    trade_returns = (strategy_returns + 1).cumprod()[crosspoint].pct_change().dropna()
-
-    result = pandas.DataFrame()
-    result['equity'] = strategy_returns.fillna(value=0)
-    result['trade_equity'] = trade_returns
-    result['long_equity'] = trade_returns[long_close]
-    result['short_equity'] = trade_returns[short_close]
-    result['positions'] = positions
-    result['crosspoint'] = crosspoint.astype(int)
-    return result
-
-
-class Backtest(object):
-    def __init__(self, data, strategy, name=None, extractor=None):
+class BaseBacktest(object):
+    def __init__(self, data, strategy, name=None, **kwargs):
         self.name = name
-        self.data = data
+        self.data = self._process_data(data)
+        self.signals = self._process_strategy(strategy, data, **kwargs)
+        self.positions = signals_to_positions(self.signals)
+        self.result = self._execute(self.data, self.positions)
 
-        if callable(strategy):
-            self.signals = strategy(data)
+    @abstractmethod
+    def _process_data(self, data):
+        raise NotImplementedError()
+    @abstractmethod
+    def _process_strategy(self, strategy, data, **kwargs):
+        raise NotImplementedError()
+    @abstractmethod
+    def _execute(self, data, positions):
+        raise NotImplementedError()
+
+    @property
+    def cumulative_equity(self):
+        return (self.result.equity + 1).cumprod()
+
+
+class SingleAssetBacktest(BaseBacktest):
+    def _process_data(self, data):
+        if isinstance(data, pandas.DataFrame):
+            return data
         else:
-            self.signals = strategy
+            raise BacktestError('incorrect *data* specification')
+    def _process_strategy(self, strategy, data, **kwargs):
+        if callable(strategy):
+            return strategy(data, **kwargs)
+        if isinstance(strategy, pandas.DataFrame):
+            return strategy
+        else:
+            raise BacktestError('strategy is not [callable] and not dict/panel')
+    def _execute(self, data, positions):
+        if not isinstance(self.positions, pandas.Series):
+            raise BacktestError('[internal] must be Series')
+        return fast_execute(self.data['trade_price'], self.positions)
 
-        if extractor is None:
-            extractor = select_signal_extractor(self.signals)
-        self.positions = extractor(self.signals)
 
-        if self.positions is None:
-            raise BacktestError('incorrect *signals*')
+class MultiAssetBacktest(BaseBacktest):
+    def _process_data(self, data):
+        if isinstance(data, pandas.Panel):
+            return data
+        elif isinstance(data, dict):
+            return pandas.Panel(data)
+        elif isinstance(data, pandas.DataFrame):
+            raise BacktestError('DataFrame *data* is valid only for single-asset')
+        else:
+            raise BacktestError('incorrect *data* specification')
+    def _process_strategy(self, strategy, data, **kwargs):
+        if callable(strategy):
+            return strategy(data, **kwargs)
+        signals = None
+        if isinstance(strategy, dict):
+            signals = pandas.Panel(strategy)
+        elif isinstance(strategy, pandas.Panel):
+            signals = strategy
+        elif isinstance(strategy, pandas.DataFrame):
+            raise BacktestError('strategy specified as signals DataFrame is not compatible with MultiAssetBacktest')
+        else:
+            raise BacktestError('strategy is not [callable] and not dict/panel')
+        return signals
+    def _execute(self, data, positions):
+        if not isinstance(positions, pandas.DataFrame):
+            raise BacktestError('[internal] positions must be DataFrame')
+        result = {}
+        for symbol in positions.columns:
+            result[symbol] = fast_execute(data.ix[symbol, :, 'trade_price'], positions[symbol])
+        result = pandas.Panel(result)
+        return result
 
-        # self.positions[-1] = 0
-        self.result = fast_execute(self.data['trade_price'], self.positions)
+
+def select_backtest_cls(data):
+    if isinstance(data, pandas.DataFrame):
+        return SingleAssetBacktest
+    elif isinstance(data, (dict, pandas.Panel)):
+        return MultiAssetBacktest
+    else:
+        raise BacktestError('cannot select backtest class')
+
+
+def backtest(data, strategy, name=None, **kwargs):
+    return select_backtest_cls(data)(data, strategy, name=name, **kwargs)

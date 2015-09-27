@@ -16,9 +16,9 @@ def load_from_yahoo(ticker='SPY', start='1900'):
     data = get_data_yahoo(ticker, start)
     data = data.rename(columns={'Open': 'open', 'High': 'high', 'Low': 'low',
                                 'Close': 'close', 'Volume': 'volume'})
-    adj = data['Adj Close'] / data['close']
-    # import IPython; IPython.embed()
-    for col in ['open', 'high', 'low', 'close']:
-        data[col] *= adj
-    data = data.drop('Adj Close', axis=1)
+    if 'Adj Close' in data:
+        adj = data['Adj Close'] / data['close']
+        for col in ['open', 'high', 'low', 'close']:
+            data[col] *= adj
+        data = data.drop('Adj Close', axis=1)
     return data
