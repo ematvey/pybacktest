@@ -78,6 +78,22 @@ def type2_signals_to_positions(signals):
     return p
 
 
+def signals_to_positions(signals):
+    """ Process signals to get positions using different signal-to-positions processing modes
+    """
+    if isinstance(signals, pandas.Series):
+        # option 1: positions
+        return signals
+    elif isinstance(signals, (dict, pandas.DataFrame)):
+        # option 2: full spec with entries/exists (type 1 signals)
+        if 'long_entry' in signals or 'short_entry' in signals:
+            return type1_signals_to_positions(signals)
+        # option 3: separate long/short positions (type 2 signals)
+        elif 'long' in signals or 'short' in signals:
+            return type2_signals_to_positions(signals)
+    raise SignalError('signals are in unknown form, cannot select processor')
+
+
 def fast_execute(price, positions):
     """ Fast vectorized execute.
 

@@ -2,7 +2,7 @@ from itertools import product
 
 import pandas as pd
 
-from pybacktest.backtest import Backtest
+from pybacktest.backtest import backtest
 
 
 def parameter_grid(param_grid):
@@ -15,18 +15,24 @@ def parameter_grid(param_grid):
         yield dict(zip(keys, par))
 
 
-def bruteforce(backtest_cls, strategy_fn, data, opt_params, evaluation_func):
+def bruteforce(data, strategy_fn, opt_params, evaluation_func, verbose=False):
     score = 0
     params = {}
     grid = list(parameter_grid(opt_params))
-    print('bruteforce: grid size %s' % len(grid))
+    if verbose: print('bruteforce: grid size %s' % len(grid))
     for par in grid:
-        bt = backtest_cls(data, lambda d: strategy_fn(d, **par))
+        bt = backtest(data, lambda d: strategy_fn(d, **par))
         s = evaluation_func(bt.result.equity)
         if s > score:
             score = s
             params = par
     return params
+
+
+def ret_to_mdd(eq):
+    c = (eq + 1).cumprod()
+    mdd = (pd.expanding_max(c) - c).max()
+    return c.sum() / mdd
 
 
 def equity_eval_func(eq):
@@ -39,28 +45,30 @@ class WalkForwardTest(object):
             optimize_window_size=90, test_window_size=60,
             evaluation_func=equity_eval_func,
             optimization_func=bruteforce,
-            backtest_cls=Backtest,
             verbose=True,
     ):
         assert callable(strategy)
+        need_opt_verbosity = False
+        if verbose:
+            need_opt_verbosity = True
 
         self.backtests = []
-
         _opt = []
-
         i = optimize_window_size
         l = len(data)
         while i < l:
             opt_sample = data.iloc[i - optimize_window_size:i]
             test_sample = data.iloc[i:i + test_window_size]
-            params = optimization_func(backtest_cls, strategy, opt_sample, opt_params, evaluation_func)
+
+            params = optimization_func(opt_sample, strategy, opt_params, evaluation_func, verbose=need_opt_verbosity)
+            need_opt_verbosity = False
 
             _o = {'date': data.index[i]}
             _o.update(params)
             _opt.append(_o)
 
             assert isinstance(params, dict)
-            self.backtests.append(backtest_cls(test_sample, lambda d: strategy(d, **params)))
+            self.backtests.append(backtest(test_sample, lambda d: strategy(d, **params)))
 
             if verbose:
                 print(
@@ -75,6 +83,5 @@ class WalkForwardTest(object):
         result = []
         for i, bt in enumerate(self.backtests):
             r = bt.result.copy()
-            r['i'] = i
             result.append(r)
         self.result = pd.concat(result, axis=0)
