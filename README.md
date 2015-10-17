@@ -1,7 +1,14 @@
 # pybacktest
 Simple yet powerful backtesting framework in python/pandas.
 
-**21.05.2015** - *Author's note:*
+### Updates
+
+**18.10.2015**
+
+Development of v0.2 is actively uderway in branch `v0.2`. This is a complete rewrite and nowhere near ready, but I believe it is already better then current master in many ways. Documentation/examples is non-existent though.
+
+**21.05.2015**
+
 This package has long been abandoned, but now I am planning to move it to version 0.2. Main goals are:
  - Smarter handling of possible backtest initialization arguments, such as different ways to specify signals, price data and such.
  - Better multi-asset backtest capabilites.
