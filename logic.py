@@ -9,11 +9,18 @@ def dummy_signals_to_positions(signals):
     return signals
 
 
-def type1_signals_to_positions(signals):
-    long_entry = signals.get('long_entry')
-    short_entry = signals.get('short_entry')
-    long_exit = signals.get('long_exit')
-    short_exit = signals.get('short_exit')
+type1_signals_fields = ['long_entry', 'short_entry']
+
+
+def type1_signals_to_positions(signals, instrument=None):
+    prefix = ''
+    if instrument:
+        prefix = instrument + '_'
+
+    long_entry = signals.get(prefix + 'long_entry')
+    short_entry = signals.get(prefix + 'short_entry')
+    long_exit = signals.get(prefix + 'long_exit')
+    short_exit = signals.get(prefix + 'short_exit')
 
     assert long_entry is not None or short_entry is not None
     if long_entry is not None and short_entry is not None:
@@ -41,7 +48,7 @@ def type1_signals_to_positions(signals):
             l.ix[short_entry] = 0.0
         p = l.ffill()
     if short_entry is not None:
-        s = pandas.Series(index=long_entry.index, dtype='float')
+        s = pandas.Series(index=short_entry.index, dtype='float')
         s.ix[short_entry] = -1.0
         if short_exit is not None:
             s.ix[short_exit] = 0.0
@@ -56,9 +63,16 @@ def type1_signals_to_positions(signals):
     return p
 
 
-def type2_signals_to_positions(signals):
-    long_pos = signals.get('long')
-    short_pos = signals.get('short')
+type2_signals_fields = ['long', 'short']
+
+
+def type2_signals_to_positions(signals, instrument=None):
+    prefix = ''
+    if instrument:
+        prefix = instrument + '_'
+
+    long_pos = signals.get(prefix + 'long')
+    short_pos = signals.get(prefix + 'short')
     assert long_pos is not None or short_pos is not None
     p = None
     if long_pos is not None:
@@ -84,13 +98,42 @@ def signals_to_positions(signals):
     if isinstance(signals, pandas.Series):
         # option 1: positions
         return signals
+
     elif isinstance(signals, (dict, pandas.DataFrame)):
+
+        positions = {}
+
+        columns = []
+        if isinstance(signals, dict):
+            columns = signals.keys()
+        elif isinstance(signals, pandas.DataFrame):
+            columns = signals.columns
+
         # option 2: full spec with entries/exists (type 1 signals)
-        if 'long_entry' in signals or 'short_entry' in signals:
-            return type1_signals_to_positions(signals)
+        for column in columns:
+            for field in type1_signals_fields:
+                if column.endswith(field):
+                    instrument = column.replace(field, '').rstrip('_')
+                    if instrument not in positions:
+                        p = type1_signals_to_positions(signals, instrument=instrument)
+                        if instrument == '':
+                            return p
+                        positions[instrument] = p
+
         # option 3: separate long/short positions (type 2 signals)
-        elif 'long' in signals or 'short' in signals:
-            return type2_signals_to_positions(signals)
+        for column in columns:
+            for field in type2_signals_fields:
+                if column.endswith(field):
+                    instrument = column.replace(field, '').rstrip('_')
+                    if instrument not in positions:
+                        p = type2_signals_to_positions(signals, instrument=instrument)
+                        if instrument == '':
+                            return p
+                        positions[instrument] = p
+
+        if len(positions) > 0:
+            return pandas.DataFrame(positions)
+
     raise SignalError('signals are in unknown form, cannot select processor')
 
 
@@ -114,10 +157,10 @@ def fast_execute(price, positions):
     trade_returns = (strategy_returns + 1).cumprod()[crosspoint].pct_change().dropna()
 
     result = pandas.DataFrame()
-    result['equity'] = strategy_returns.fillna(value=0)
-    result['trade_equity'] = trade_returns
-    result['long_equity'] = trade_returns[long_close]
-    result['short_equity'] = trade_returns[short_close]
+    result['returns'] = strategy_returns.fillna(value=0)
+    result['trade_returns'] = trade_returns
+    result['long_returns'] = trade_returns[long_close]
+    result['short_returns'] = trade_returns[short_close]
     result['positions'] = positions
-    result['crosspoint'] = crosspoint.astype(int)
+    # result['crosspoint'] = crosspoint.astype(int)
     return result
