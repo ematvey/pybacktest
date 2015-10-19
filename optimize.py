@@ -35,7 +35,7 @@ def ret_to_mdd(eq):
     return c.sum() / mdd
 
 
-def equity_eval_func(eq):
+def final_equity(eq):
     return (eq + 1).prod()
 
 
@@ -43,7 +43,7 @@ class WalkForwardTest(object):
     def __init__(
             self, data, strategy, opt_params,
             optimize_window_size=90, test_window_size=60,
-            evaluation_func=equity_eval_func,
+            evaluation_func=final_equity,
             optimization_func=bruteforce,
             verbose=True,
     ):

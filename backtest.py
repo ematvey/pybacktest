@@ -1,6 +1,7 @@
 import pandas
 
-from pybacktest.logic import fast_execute, signals_to_positions
+from pybacktest.execute_fast import vectorized_execute
+from pybacktest.execute_iterative import iterative_execute
 
 
 class BacktestError(Exception):
@@ -8,44 +9,55 @@ class BacktestError(Exception):
 
 
 class Backtest(object):
-    def __init__(self, data, strategy, name=None, **kwargs):
+    """
+
+    Attributes
+    ----------
+    - :positions: pandas.Series
+        Strategy positions.
+
+        None if conditional execution (with stop losses or take profits) is used. Position reporting does not make
+        sense when stops/takes are present, since they could be closed between timestamps in data.
+
+    """
+
+    def __init__(self, data, strategy, name=None, iterative=False, **kwargs):
         self.name = name
-        self.data = self._process_data(data)
-        self.signals = self._process_strategy(strategy, data, **kwargs)
-        self.positions = self._process_signals(self.signals)
-        self.result = self._execute_positions(self.data, self.positions)
+        self.kwargs = kwargs
+        self.data = data
+        self._verify_data()
+        self.strategy = strategy
+        self.signals = None
+        self._run_strategy()
 
-    @staticmethod
-    def _process_data(data):
-        if isinstance(data, pandas.DataFrame):
-            return data
+        self.result = None
+        self.positions = None
+        self.iterative = iterative or self.conditional_signals
+        if not self.iterative:
+            self.positions, self.result = vectorized_execute(self.data, self.signals)
         else:
-            raise BacktestError('incorrect *data* specification')
+            self.result = iterative_execute(self.data, self.signals)
 
-    @staticmethod
-    def _process_strategy(strategy, data, **kwargs):
-        if callable(strategy):
-            return strategy(data, **kwargs)
-        elif isinstance(strategy, pandas.DataFrame):
-            return strategy
-        elif isinstance(strategy, dict):
-            return pandas.DataFrame(strategy)
+    @property
+    def conditional_signals(self):
+        if any([any([column.endswith(f) for column in self.signals]) for f in
+                ['long_stoploss_price', 'long_takeprofit_price', 'short_stoploss_price', 'short_takeprofit_price']]):
+            return True
+        return False
+
+    def _verify_data(self):
+        if not isinstance(self.data, pandas.DataFrame):
+            raise BacktestError('incorrect *data* specification - pandas dataframe is required')
+
+    def _run_strategy(self):
+        if callable(self.strategy):
+            self.signals = self.strategy(self.data, **self.kwargs)
+        elif isinstance(self.strategy, pandas.DataFrame):
+            self.signals = self.strategy
+        elif isinstance(self.strategy, dict):
+            self.signals = pandas.DataFrame(self.strategy)
         else:
             raise BacktestError('*strategy* is not callable or dict or pandas dataframe')
-
-    @staticmethod
-    def _process_signals(signals):
-        return signals_to_positions(signals)
-
-    @staticmethod
-    def _execute_positions(data, positions):
-        if isinstance(positions, pandas.Series):
-            return fast_execute(data['trade_price'], positions)
-        elif isinstance(positions, pandas.DataFrame):
-            return pandas.Panel(
-                {instrument: fast_execute(data['%s_trade_price' % instrument], positions[instrument])
-                 for instrument in positions.columns}
-            )
 
     @property
     def equity(self):

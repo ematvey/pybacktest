@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from pybacktest.backtest import type1_signals_to_positions, type2_signals_to_positions
+from pybacktest.execute_fast import type1_signals_to_positions, type2_signals_to_positions
 
 
 def test_type1_signals_to_positions():

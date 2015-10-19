@@ -94,6 +94,8 @@ def type2_signals_to_positions(signals, instrument=None):
 
 def signals_to_positions(signals):
     """ Process signals to get positions using different signal-to-positions processing modes
+
+        Supports only conditionless execution
     """
     if isinstance(signals, pandas.Series):
         # option 1: positions
@@ -137,7 +139,7 @@ def signals_to_positions(signals):
     raise SignalError('signals are in unknown form, cannot select processor')
 
 
-def fast_execute(price, positions):
+def vectorized_execute_one(trade_price, positions):
     """ Fast vectorized execute.
 
         Works with standard position/fixed-price market order entries,
@@ -145,22 +147,40 @@ def fast_execute(price, positions):
     """
 
     # find trade end points
-    long_close = (positions <= 0) & (positions > 0).shift()
-    short_close = (positions >= 0) & (positions < 0).shift()
-    crosspoint = long_close | short_close
+    long_exit_points = (positions <= 0) & (positions > 0).shift()
+    short_exit_points = (positions >= 0) & (positions < 0).shift()
+
+    crosspoint = long_exit_points | short_exit_points
     crosspoint[0] = True
     crosspoint[1] = True
 
     # efficient way to calculate equity curve
-    strategy_returns = (price.pct_change() * positions.shift())
+    strategy_returns = (trade_price.pct_change() * positions.shift())
 
     trade_returns = (strategy_returns + 1).cumprod()[crosspoint].pct_change().dropna()
 
     result = pandas.DataFrame()
     result['returns'] = strategy_returns.fillna(value=0)
     result['trade_returns'] = trade_returns
-    result['long_returns'] = trade_returns[long_close]
-    result['short_returns'] = trade_returns[short_close]
+    result['long_returns'] = trade_returns[long_exit_points]
+    result['short_returns'] = trade_returns[short_exit_points]
     result['positions'] = positions
-    # result['crosspoint'] = crosspoint.astype(int)
     return result
+
+
+def vectorized_execute(data, signals):
+    """ Fast vectorized execute.
+
+        Works with standard position/fixed-price market order entries,
+        but not with conditional trades like stops or limit orders.
+    """
+    positions = signals_to_positions(signals)
+    result = None
+    if isinstance(positions, pandas.Series):
+        result = vectorized_execute_one(data['trade_price'], positions)
+    elif isinstance(positions, pandas.DataFrame):
+        result = pandas.Panel(
+            {instrument: vectorized_execute(data['%s_trade_price' % instrument], positions[instrument])
+             for instrument in positions.columns}
+        )
+    return positions, result
