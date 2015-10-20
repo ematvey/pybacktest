@@ -1,15 +1,10 @@
 import pandas
 
-
-class SignalError(Exception):
-    pass
+from pybacktest.execute_defs import *
 
 
 def dummy_signals_to_positions(signals):
     return signals
-
-
-type1_signals_fields = ['long_entry', 'short_entry']
 
 
 def type1_signals_to_positions(signals, instrument=None):
@@ -17,10 +12,10 @@ def type1_signals_to_positions(signals, instrument=None):
     if instrument:
         prefix = instrument + '_'
 
-    long_entry = signals.get(prefix + 'long_entry')
-    short_entry = signals.get(prefix + 'short_entry')
-    long_exit = signals.get(prefix + 'long_exit')
-    short_exit = signals.get(prefix + 'short_exit')
+    long_entry = signals.get(prefix + t_l_en)
+    short_entry = signals.get(prefix + t_s_en)
+    long_exit = signals.get(prefix + t_l_ex)
+    short_exit = signals.get(prefix + t_s_ex)
 
     assert long_entry is not None or short_entry is not None
     if long_entry is not None and short_entry is not None:
@@ -63,16 +58,13 @@ def type1_signals_to_positions(signals, instrument=None):
     return p
 
 
-type2_signals_fields = ['long', 'short']
-
-
 def type2_signals_to_positions(signals, instrument=None):
     prefix = ''
     if instrument:
         prefix = instrument + '_'
 
-    long_pos = signals.get(prefix + 'long')
-    short_pos = signals.get(prefix + 'short')
+    long_pos = signals.get(prefix + t_l)
+    short_pos = signals.get(prefix + t_s)
     assert long_pos is not None or short_pos is not None
     p = None
     if long_pos is not None:
@@ -113,7 +105,7 @@ def signals_to_positions(signals):
 
         # option 2: full spec with entries/exists (type 1 signals)
         for column in columns:
-            for field in type1_signals_fields:
+            for field in type1_signal_tokens:
                 if column.endswith(field):
                     instrument = column.replace(field, '').rstrip('_')
                     if instrument not in positions:
@@ -124,7 +116,7 @@ def signals_to_positions(signals):
 
         # option 3: separate long/short positions (type 2 signals)
         for column in columns:
-            for field in type2_signals_fields:
+            for field in type2_signal_tokens:
                 if column.endswith(field):
                     instrument = column.replace(field, '').rstrip('_')
                     if instrument not in positions:
@@ -177,10 +169,10 @@ def vectorized_execute(data, signals):
     positions = signals_to_positions(signals)
     result = None
     if isinstance(positions, pandas.Series):
-        result = vectorized_execute_one(data['trade_price'], positions)
+        result = vectorized_execute_one(data[t_trade_price], positions)
     elif isinstance(positions, pandas.DataFrame):
         result = pandas.Panel(
-            {instrument: vectorized_execute(data['%s_trade_price' % instrument], positions[instrument])
+            {instrument: vectorized_execute(data[instrument + '_' + t_trade_price], positions[instrument])
              for instrument in positions.columns}
         )
     return positions, result

@@ -1,16 +1,6 @@
-tok_high = 'high'
-tok_low = 'low'
+import pandas
 
-tok_lens = 'long_entry_stop_price'
-tok_lenl = 'long_entry_limit_price'
-tok_lexs = 'long_exit_stop_price'
-tok_lexl = 'long_exit_limit_price'
-tok_sens = 'short_entry_stop_price'
-tok_senl = 'short_entry_limit_price'
-tok_sexs = 'short_exit_stop_price'
-tok_sexl = 'short_exit_limit_price'
-
-conditional_column_tokens = [tok_lens, tok_lenl, tok_lexs, tok_lenl, tok_sens, tok_senl, tok_sexs, tok_sexl]
+from pybacktest.execute_defs import *
 
 
 def conditional_signals(signals):
@@ -21,5 +11,13 @@ def conditional_signals(signals):
     return False
 
 
-def iterative_execute(data, signals):
+def iterative_execute_one(data, signals):
     raise NotImplementedError('strategy requires iterative execution which is not implented yet')
+
+
+def iterative_execute(data, signals):
+    signals, multi = parse_signals_dataframe(signals, all_tokens)
+    if len(signals) == 1:
+        return iterative_execute_one(data, signals[list(signals.keys())[0]])
+    else:
+        return pandas.Panel({symbol: iterative_execute_one(data, s) for symbol, s in signals.items()})
