@@ -1,7 +1,7 @@
 import pandas
 
 from pybacktest.execute_fast import vectorized_execute
-from pybacktest.execute_iterative import iterative_execute
+from pybacktest.execute_iterative import iterative_execute, conditional_signals
 
 
 class BacktestError(Exception):
@@ -32,18 +32,11 @@ class Backtest(object):
 
         self.result = None
         self.positions = None
-        self.iterative = iterative or self.conditional_signals
+        self.iterative = iterative or conditional_signals(self.signals)
         if not self.iterative:
             self.positions, self.result = vectorized_execute(self.data, self.signals)
         else:
             self.result = iterative_execute(self.data, self.signals)
-
-    @property
-    def conditional_signals(self):
-        if any([any([column.endswith(f) for column in self.signals]) for f in
-                ['long_stoploss_price', 'long_takeprofit_price', 'short_stoploss_price', 'short_takeprofit_price']]):
-            return True
-        return False
 
     def _verify_data(self):
         if not isinstance(self.data, pandas.DataFrame):

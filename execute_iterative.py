@@ -1,11 +1,25 @@
-def iterative_execute(data, signals):
-    # trade_price, positions, high=None, low=None, long_stoploss_price=None,
-    # long_takeprofit_price=None,
-    # short_stoploss_price=None, short_takeprofit_price=None
+tok_high = 'high'
+tok_low = 'low'
 
-    # high=data.get('high'), low=data.get('low'),
-    # long_stoploss_price=data.get('long_stoploss_price'),
-    # long_takeprofit_price=data.get('long_takeprofit_price'),
-    # short_stoploss_price=data.get('short_stoploss_price'),
-    # short_takeprofit_price=data.get('short_takeprofit_price')
+tok_lens = 'long_entry_stop_price'
+tok_lenl = 'long_entry_limit_price'
+tok_lexs = 'long_exit_stop_price'
+tok_lexl = 'long_exit_limit_price'
+tok_sens = 'short_entry_stop_price'
+tok_senl = 'short_entry_limit_price'
+tok_sexs = 'short_exit_stop_price'
+tok_sexl = 'short_exit_limit_price'
+
+conditional_column_tokens = [tok_lens, tok_lenl, tok_lexs, tok_lenl, tok_sens, tok_senl, tok_sexs, tok_sexl]
+
+
+def conditional_signals(signals):
+    for f in conditional_column_tokens:
+        for column in signals:
+            if column.endswith(f):
+                return True
+    return False
+
+
+def iterative_execute(data, signals):
     raise NotImplementedError('strategy requires iterative execution which is not implented yet')
