@@ -45,8 +45,23 @@ class Backtest(object):
             raise BacktestError('*strategy* is not callable or dict or pandas dataframe')
 
     @property
-    def equity(self):
+    def returns(self):
         if isinstance(self.result, pandas.DataFrame):
-            return (self.result.returns + 1).cumprod()
+            return self.result['returns']
         elif isinstance(self.result, pandas.Panel):
-            return (self.result.ix[:, :, 'returns'].T.sum() + 1).cumprod()
+            return self.result.ix[:, :, 'returns'].T.sum()
+
+    @property
+    def trade_returns(self):
+        if isinstance(self.result, pandas.DataFrame):
+            return self.result['trade_returns']
+        elif isinstance(self.result, pandas.Panel):
+            return self.result.ix[:, :, 'trade_returns'].T.sum()
+
+    @property
+    def equity(self):
+        return (self.returns + 1).cumprod()
+
+    @property
+    def trade_equity(self):
+        return (self.trade_returns + 1).cumprod()
