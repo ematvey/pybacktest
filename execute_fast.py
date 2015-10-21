@@ -7,10 +7,10 @@ def dummy_signals_to_positions(signals):
     return signals
 
 
-def type1_signals_to_positions(signals, instrument=None):
+def type1_signals_to_positions(signals, symbol=None):
     prefix = ''
-    if instrument:
-        prefix = instrument + '_'
+    if symbol:
+        prefix = symbol + '_'
 
     long_entry = signals.get(prefix + t_l_en)
     short_entry = signals.get(prefix + t_s_en)
@@ -58,10 +58,10 @@ def type1_signals_to_positions(signals, instrument=None):
     return p
 
 
-def type2_signals_to_positions(signals, instrument=None):
+def type2_signals_to_positions(signals, symbol=None):
     prefix = ''
-    if instrument:
-        prefix = instrument + '_'
+    if symbol:
+        prefix = symbol + '_'
 
     long_pos = signals.get(prefix + t_l)
     short_pos = signals.get(prefix + t_s)
@@ -107,23 +107,23 @@ def signals_to_positions(signals):
         for column in columns:
             for field in type1_signal_tokens:
                 if column.endswith(field):
-                    instrument = column.replace(field, '').rstrip('_')
-                    if instrument not in positions:
-                        p = type1_signals_to_positions(signals, instrument=instrument)
-                        if instrument == '':
+                    symbol = column.replace(field, '').rstrip('_')
+                    if symbol not in positions:
+                        p = type1_signals_to_positions(signals, symbol=symbol)
+                        if symbol == '':
                             return p
-                        positions[instrument] = p
+                        positions[symbol] = p
 
         # option 3: separate long/short positions (type 2 signals)
         for column in columns:
             for field in type2_signal_tokens:
                 if column.endswith(field):
-                    instrument = column.replace(field, '').rstrip('_')
-                    if instrument not in positions:
-                        p = type2_signals_to_positions(signals, instrument=instrument)
-                        if instrument == '':
+                    symbol = column.replace(field, '').rstrip('_')
+                    if symbol not in positions:
+                        p = type2_signals_to_positions(signals, symbol=symbol)
+                        if symbol == '':
                             return p
-                        positions[instrument] = p
+                        positions[symbol] = p
 
         if len(positions) > 0:
             return pandas.DataFrame(positions)
@@ -153,14 +153,14 @@ def vectorized_execute_one(trade_price, positions):
 
     result = pandas.DataFrame()
     result['returns'] = strategy_returns.fillna(value=0)
-    result['trade_returns'] = trade_returns
-    result['long_returns'] = trade_returns[long_exit_points]
-    result['short_returns'] = trade_returns[short_exit_points]
     result['positions'] = positions
+    result['trade_returns'] = trade_returns
+    result['long_trade_returns'] = trade_returns[long_exit_points]
+    result['short_trade_returns'] = trade_returns[short_exit_points]
     return result
 
 
-def vectorized_execute(data, signals):
+def vectorized_execute(data, signals, symbol=None):
     """ Fast vectorized execute.
 
         Works with standard position/fixed-price market order entries,
@@ -169,10 +169,9 @@ def vectorized_execute(data, signals):
     positions = signals_to_positions(signals)
     result = None
     if isinstance(positions, pandas.Series):
-        result = vectorized_execute_one(data[t_trade_price], positions)
+        result = vectorized_execute_one(data[format_field(t_trade_price, symbol=symbol)], positions)
     elif isinstance(positions, pandas.DataFrame):
         result = pandas.Panel(
-            {instrument: vectorized_execute(data[instrument + '_' + t_trade_price], positions[instrument])
-             for instrument in positions.columns}
+            {symbol: vectorized_execute_one(data[format_field(t_trade_price, symbol=symbol)], positions[symbol]) for symbol in positions.columns}
         )
     return positions, result

@@ -11,22 +11,11 @@ t_s_en = 'short_entry'
 t_l_ex = 'long_exit'
 t_s_ex = 'short_exit'
 
-t_l_en_s = 'long_entry_stop_price'
-t_s_en_s = 'short_entry_stop_price'
-t_l_ex_s = 'long_exit_stop_price'
-t_s_ex_s = 'short_exit_stop_price'
-
-t_l_en_l = 'long_entry_limit_price'
-t_s_en_l = 'short_entry_limit_price'
-t_l_ex_l = 'long_exit_limit_price'
-t_s_ex_l = 'short_exit_limit_price'
-
 standard_tokens = [t_trade_price, t_l_en, t_l_ex, t_s_en, t_s_ex, t_l, t_s]
-conditional_column_tokens = [t_l_en_s, t_l_en_l, t_l_ex_s, t_l_en_l, t_s_en_s, t_s_en_l, t_s_ex_s, t_s_ex_l]
 type1_signal_tokens = [t_l_en, t_s_en]
 type2_signal_tokens = [t_l, t_s]
 
-all_tokens = conditional_column_tokens + standard_tokens + [t_high, t_low]
+all_tokens = standard_tokens + [t_high, t_low]
 
 
 class SignalError(Exception):
@@ -37,8 +26,11 @@ class SignalMixingNotAllowed(SignalError):
     pass
 
 
-def format_multiasset_field(symbol, token):
-    return symbol + '_' + token
+def format_field(token, symbol=None):
+    if symbol is None:
+        return token
+    else:
+        return symbol + '_' + token
 
 
 def parse_signals_dataframe(signals, tokens):

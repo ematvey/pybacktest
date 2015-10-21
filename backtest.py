@@ -1,7 +1,6 @@
 import pandas
 
 from pybacktest.execute_fast import vectorized_execute
-from pybacktest.execute_iterative import iterative_execute, conditional_signals
 
 
 class BacktestError(Exception):
@@ -16,9 +15,6 @@ class Backtest(object):
     - :positions: pandas.Series
         Strategy positions.
 
-        None if conditional execution (with stop losses or take profits) is used. Position reporting does not make
-        sense when stops/takes are present, since they could be closed between timestamps in data.
-
     """
 
     def __init__(self, data, strategy, name=None, iterative=False, **kwargs):
@@ -32,11 +28,7 @@ class Backtest(object):
 
         self.result = None
         self.positions = None
-        self.iterative = iterative or conditional_signals(self.signals)
-        if not self.iterative:
-            self.positions, self.result = vectorized_execute(self.data, self.signals)
-        else:
-            self.result = iterative_execute(self.data, self.signals)
+        self.positions, self.result = vectorized_execute(self.data, self.signals)
 
     def _verify_data(self):
         if not isinstance(self.data, pandas.DataFrame):
@@ -54,4 +46,7 @@ class Backtest(object):
 
     @property
     def equity(self):
-        return (self.result.returns + 1).cumprod()
+        if isinstance(self.result, pandas.DataFrame):
+            return (self.result.returns + 1).cumprod()
+        elif isinstance(self.result, pandas.Panel):
+            return (self.result.ix[:, :, 'returns'].T.sum() + 1).cumprod()
