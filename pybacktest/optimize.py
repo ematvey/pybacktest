@@ -2,7 +2,7 @@ from itertools import product
 
 import pandas as pd
 
-from pybacktest.backtest import backtest
+from pybacktest.backtest import Backtest
 
 
 def parameter_grid(param_grid):
@@ -21,7 +21,7 @@ def bruteforce(data, strategy_fn, opt_params, evaluation_func, verbose=False):
     grid = list(parameter_grid(opt_params))
     if verbose: print('bruteforce: grid size %s' % len(grid))
     for par in grid:
-        bt = backtest(data, lambda d: strategy_fn(d, **par))
+        bt = Backtest(data, lambda d: strategy_fn(d, **par))
         s = evaluation_func(bt.result.equity)
         if s > score:
             score = s
@@ -68,7 +68,7 @@ class WalkForwardTest(object):
             _opt.append(_o)
 
             assert isinstance(params, dict)
-            self.backtests.append(backtest(test_sample, lambda d: strategy(d, **params)))
+            self.backtests.append(Backtest(test_sample, lambda d: strategy(d, **params)))
 
             if verbose:
                 print(

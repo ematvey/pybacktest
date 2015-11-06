@@ -4,7 +4,7 @@
 
 """ Set of data-loading helpers """
 
-from pandas.io.data import get_data_yahoo
+import pandas_datareader.data as reader
 
 
 def load_from_yahoo(ticker='SPY', start='1900'):
@@ -13,7 +13,7 @@ def load_from_yahoo(ticker='SPY', start='1900'):
     After loading it renames columns to shorter format, which is what Backtest expects.
     Adjust all price fields by dividend yield.
     """
-    data = get_data_yahoo(ticker, start)
+    data = reader.get_data_yahoo(ticker, start)
     data = data.rename(columns={'Open': 'open', 'High': 'high', 'Low': 'low',
                                 'Close': 'close', 'Volume': 'volume'})
     if 'Adj Close' in data:

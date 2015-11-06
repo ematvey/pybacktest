@@ -169,9 +169,9 @@ def vectorized_execute(data, signals, symbol=None):
     positions = signals_to_positions(signals)
     result = None
     if isinstance(positions, pandas.Series):
-        result = vectorized_execute_one(data[format_field(t_trade_price, symbol=symbol)], positions)
+        result = vectorized_execute_one(data[format_field(symbol, t_trade_price, None)], positions)
     elif isinstance(positions, pandas.DataFrame):
         result = pandas.Panel(
-            {symbol: vectorized_execute_one(data[format_field(t_trade_price, symbol=symbol)], positions[symbol]) for symbol in positions.columns}
+            {symbol: vectorized_execute_one(data[format_field(t_trade_price, None)], positions[symbol]) for symbol in positions.columns}
         )
     return positions, result
