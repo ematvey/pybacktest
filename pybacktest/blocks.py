@@ -1,23 +1,6 @@
 from abc import abstractmethod
 
-import numpy
-import pandas
-
-
-class Blotter(object):
-    def __init__(self, positions, trade_price, mark_price):
-        self.positions = positions
-        self.trade_price = trade_price
-        self.mark_price = mark_price
-
-        self.trade_equity = (
-            self.positions.shift() * self.trade_price.pct_change()
-        ).fillna(value=0).ix[self.positions == 0]
-
-        self.continuous_price = self.mark_price.copy()
-        self.continuous_price[self.trade_price.index] = self.trade_price
-        self.continuous_equity = (self.positions.reindex(self.continuous_price.index).ffill().fillna(
-            value=0).shift() * self.continuous_price.pct_change()).fillna(value=0)
+__all__ = ['SpecError', 'Entry', 'Long', 'Short', 'Exit', 'TimeExit', 'PercentStopLoss']
 
 
 class SpecError(ValueError):
@@ -25,10 +8,17 @@ class SpecError(ValueError):
 
 
 class BaseSignal(object):
-    def __init__(self):
+    def __init__(self, txcost_pct=0.0, txcost_points=0.0):
         self._condition = None
         self._price = None
+        self._volume = 0.0
         self.entry = None
+        self.txcost_pct = txcost_pct
+        self.txcost_points = txcost_points
+
+    @property
+    def volume(self):
+        return self._volume
 
     @property
     def condition(self):
@@ -42,80 +32,86 @@ class BaseSignal(object):
             raise SpecError("price is not set or none")
         return self._price
 
+    @property
+    def transaction_price(self):
+        if self.volume > 0:
+            return (self.price + self.txcost_points) * (1 + self.txcost_pct / 100)
+        elif self.volume < 0:
+            return (self.price - self.txcost_points) * (1 - self.txcost_pct / 100)
+        else:
+            raise ValueError('[critical] Volume is not set')
+
 
 class BaseExit(BaseSignal):
-    def __init__(self):
-        super(BaseExit, self).__init__()
+    def __init__(self, **options):
+        super(BaseExit, self).__init__(**options)
 
     def set_entry(self, entry):
         self.entry = entry
 
+    @property
+    def volume(self):
+        return -self.entry.volume
+
 
 class Entry(BaseSignal):
-    def __init__(self, condition, price, volume):
-        super(Entry, self).__init__()
+    def __init__(self, condition, price, volume, **options):
+        super(Entry, self).__init__(**options)
         self._condition = condition
         self._price = price
-        self.volume = volume
+        self._volume = volume
         self.exits = []
 
     def add_exits(self, *exits):
         for e in exits:
             if not isinstance(e, BaseSignal):
                 raise SpecError('Exit bad type: %s' % type(e))
-            if hasattr(e, 'set_entry'):
+            if isinstance(e, BaseExit):
                 e.set_entry(self)
             self.exits.append(e)
 
     def price_at_entry(self):
         return self.price.ix[self.condition].reindex(self.condition.index).ffill().fillna(value=0)
 
-    def calculate_blotter(self):
-        assert self.condition.dtype == bool
-        assert self.exits
-
-        positions = pandas.Series(index=self.condition.index, dtype='float')
-        price = pandas.Series(index=self.condition.index, dtype='float')
-
-        positions.ix[self.condition] = self.volume
-        price[self.condition] = self.price[self.condition]
-
-        for ex in self.exits:
-            positions.ix[ex.condition] = 0.0
-            price.ix[ex.condition] = ex.price[ex.condition]
-
-        positions.iloc[-1] = 0.0
-        positions = positions.dropna()
-        positions = positions.ix[positions != positions.shift()]
-
-        if numpy.isnan(price.iloc[-1]):
-            price.iloc[-1] = self.price.ix[price.index[-1]]
-
-        price = price.ix[positions.index]
-
-        return Blotter(positions, price, self.price)
-
 
 class Long(Entry):
-    def __init__(self, condition, price, volume=1.0):
-        super(Long, self).__init__(condition, price, volume)
+    def __init__(self, condition, price, volume=1.0, **options):
+        super(Long, self).__init__(condition, price, volume, **options)
 
 
 class Short(Entry):
-    def __init__(self, condition, price, volume=-1.0):
-        super(Short, self).__init__(condition, price, volume)
+    def __init__(self, condition, price, volume=-1.0, **options):
+        super(Short, self).__init__(condition, price, volume, **options)
 
 
 class Exit(BaseExit):
-    def __init__(self, condition, price):
-        super(Exit, self).__init__()
+    def __init__(self, condition, price=None, **options):
+        super(Exit, self).__init__(**options)
         self._condition = condition
         self._price = price
 
+    def set_entry(self, entry):
+        self.entry = entry
+        if self._price is None:
+            self._price = self.entry.price
+
+
+class TimeExit(BaseExit):
+    def __init__(self, periods, price=None, **options):
+        super(TimeExit, self).__init__(**options)
+        self.periods = periods
+        self._price = price
+
+    def set_entry(self, entry):
+        self.entry = entry
+        if self._price is None:
+            self._price = self.entry.price
+        self._condition = self.entry.condition.shift(self.periods).fillna(value=False)
+
 
 class BaseStopLoss(BaseExit):
-    def __init__(self, trigger_price=None, instant_execution=False):
-        super(BaseStopLoss, self).__init__()
+    def __init__(self, trigger_price=None, instant_execution=False, **options):
+        super(BaseStopLoss, self).__init__(**options)
         self.trigger_price = trigger_price
         self.instant_execution = instant_execution
         self.stop_level = None
@@ -126,13 +122,15 @@ class BaseStopLoss(BaseExit):
 
         trigger_price = self.trigger_price if self.trigger_price is not None else entry.price
 
+        stop_cond = (trigger_price != 0) & (self.stop_level != 0)
+
         if entry.volume > 0:
             self._price = self.stop_level if self.instant_execution else entry.price
-            self._condition = trigger_price < self.stop_level
+            self._condition = (trigger_price < self.stop_level) & stop_cond
 
         elif entry.volume < 0:
             self._price = self.stop_level if self.instant_execution else entry.price
-            self._condition = trigger_price > self.stop_level
+            self._condition = (trigger_price > self.stop_level) & stop_cond
 
     @abstractmethod
     def set_stop_level(self):

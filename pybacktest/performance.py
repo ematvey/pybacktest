@@ -4,8 +4,8 @@
 
 """ Functions for calculating performance statistics and reporting """
 
-import pandas
 import numpy
+import pandas
 
 start = lambda eqd: eqd.index[0]
 end = lambda eqd: eqd.index[-1]

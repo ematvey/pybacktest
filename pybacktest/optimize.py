@@ -21,8 +21,8 @@ def bruteforce(data, strategy_fn, opt_params, evaluation_func, verbose=False):
     grid = list(parameter_grid(opt_params))
     if verbose: print('bruteforce: grid size %s' % len(grid))
     for par in grid:
-        bt = Backtest(data, lambda d: strategy_fn(d, **par))
-        s = evaluation_func(bt.result.equity)
+        bt = Backtest(strategy_fn(data, **par))
+        s = evaluation_func(bt.performance.equity)
         if s > score:
             score = s
             params = par
@@ -68,7 +68,7 @@ class WalkForwardTest(object):
             _opt.append(_o)
 
             assert isinstance(params, dict)
-            self.backtests.append(Backtest(test_sample, lambda d: strategy(d, **params)))
+            self.backtests.append(Backtest(strategy(test_sample, **params)))
 
             if verbose:
                 print(
