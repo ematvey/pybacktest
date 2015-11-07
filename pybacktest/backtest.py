@@ -2,6 +2,8 @@ from pybacktest.blocks import Entry
 from pybacktest.blotter import Blotter
 from pybacktest.plot import Plotter
 
+__all__ = ['Backtest']
+
 
 class Performance(object):
     def __init__(self, blotter):
@@ -21,7 +23,7 @@ class BacktestError(Exception):
 
 
 class Backtest(object):
-    def __init__(self, spec):
+    def __init__(self, spec, txcost_pct=None, txcost_points=None):
         self.spec = spec
 
         if not isinstance(spec, Entry):
@@ -30,6 +32,6 @@ class Backtest(object):
             else:
                 raise ValueError('Incorrect spec (should be Entry)')
 
-        self.blotter = Blotter(spec)
+        self.blotter = Blotter(spec, txcost_percent=txcost_pct, txcost_points=txcost_points)
         self.performance = Performance(self.blotter)
         self.plotter = Plotter(self.blotter)

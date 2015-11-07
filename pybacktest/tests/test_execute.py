@@ -8,15 +8,15 @@ from pybacktest.blotter import Blotter
 def test_simple_1():
     en = pd.Series([0, 0, 1, 0, 0, 1, 0, 1, 0, 0], dtype='bool')
     ex = pd.Series([0, 0, 0, 0, 1, 0, 0, 0, 0, 0], dtype='bool')
-    price = pd.Series([1, 2, 4, 5, 8, 4, 5, 8, 4, 1], dtype='float')
+    pr = pd.Series([1, 2, 4, 5, 8, 4, 5, 8, 4, 1], dtype='float')
 
-    entry = Long(en, price)
-    entry.add_exits(Exit(ex, price))
+    entry = Long(en, pr)
+    entry.exit(Exit(ex, pr))
 
     p = Blotter(entry)
 
     assert (p.continuous_returns.values.round(5) == array([0., 0., 0., 0.25, 0.6, 0., 0.25, 0.6, -0.5, -0.75])).all()
-    assert (p.trade_returns.values.round(5) == array([0, 1, 0, -0.75])).all()
+    assert (p.trade_returns.values.round(5) == array([1, -0.75])).all()
 
 
 def test_simple_2():
@@ -28,8 +28,8 @@ def test_simple_2():
     lentry = Long(le, pr)
     sentry = Short(se, pr)
 
-    sentry.add_exits(Exit(sx, pr))
-    lentry.add_exits(sentry)
+    sentry.exit(Exit(sx, pr))
+    lentry.exit(sentry)
 
     p1 = Blotter(lentry)
     p2 = Blotter(sentry)
@@ -44,7 +44,7 @@ def test_time_exit():
     pr1 = pd.Series([1, 2, 4, 5, 8, 4, 5, 8, 4, 1], dtype='float')
     en1 = Long(sig, pr1)
     te = TimeExit(3)
-    en1.add_exits(te)
+    en1.exit(te)
     assert (te.condition == sig.shift(3).fillna(value=0)).all()
     assert (te.price == en1.price).all()
 
@@ -54,17 +54,17 @@ def test_pct_stoploss():
     pr1 = pd.Series([1, 2, 4, 5, 8, 4, 5, 8, 4, 1], dtype='float')
 
     en1 = Long(sig, pr1)
-    en1.add_exits(
+    en1.exit(
         PercentStopLoss(0.1, instant_execution=True),
     )
     p1 = Blotter(en1)
-    assert (p1.trade_returns.values.round(5) == array([0, -0.1])).all()
+    assert (p1.trade_returns.values.round(5) == array([-0.1])).all()
     assert (p1.continuous_returns.values.round(5) == array([0., 0., 1., 0.25, 0.6, -0.5, 0.25, 0.6, -0.5, -0.55])).all()
 
     en2 = Short(sig, pr1)
-    en2.add_exits(
+    en2.exit(
         PercentStopLoss(0.1, instant_execution=True),
     )
     p2 = Blotter(en2)
-    assert (p2.trade_returns.values.round(5) == array([0, -0.1])).all()
+    assert (p2.trade_returns.values.round(5) == array([-0.1])).all()
     assert (p2.continuous_returns.values.round(5) == array([0, 0, -0.1, 0, 0, 0, 0, 0, 0, 0])).all()
