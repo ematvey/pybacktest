@@ -15,14 +15,16 @@ def paramgrid(param_grid):
         yield dict(zip(keys, par))
 
 
-def bruteforce(data, strategy_fn, opt_params, evaluation_func, verbose=False):
+def bruteforce(data, strategy_fn, opt_params, evaluation_func, backtest_options=None, verbose=False, ):
     score = 0
     params = None
     grid = list(paramgrid(opt_params))
+    if backtest_options is None:
+        backtest_options = {}
     if verbose:
         print('bruteforce: grid size %s' % len(grid))
     for par in grid:
-        bt = Backtest(strategy_fn(data, **par))
+        bt = Backtest(strategy_fn(data, **par), **backtest_options)
         s = evaluation_func(bt.performance.trade_equity)
         if s > score:
             score = s
@@ -38,7 +40,6 @@ class WalkForwardTest(object):
     def __init__(
             self, data, strategy, opt_params,
             backtest_options=None,
-            strategy_options=None,
             optimize_window=90, test_window=60,
             evaluation_func=final_equity,
             optimization_func=bruteforce,
@@ -56,12 +57,15 @@ class WalkForwardTest(object):
         l = len(data)
 
         self.in_sample_optimized = pd.DataFrame(columns=opt_params.keys())
+        if backtest_options is None:
+            backtest_options = {}
 
         while i < l:
             in_sample = data.iloc[i - optimize_window:i]
             out_of_sample = data.iloc[i:i + test_window]
 
-            params = optimization_func(in_sample, strategy, opt_params, evaluation_func, verbose=need_opt_verbosity)
+            params = optimization_func(in_sample, strategy, opt_params, evaluation_func, backtest_options,
+                                       verbose=need_opt_verbosity)
             need_opt_verbosity = False
 
             _o = {'date': data.index[i]}

@@ -3,7 +3,7 @@ from abc import abstractmethod
 
 import pandas
 
-__all__ = ['SpecError', 'Entry', 'Long', 'Short', 'Exit', 'TimeExit', 'PercentStopLoss']
+__all__ = ['SpecError', 'Entry', 'Long', 'Short', 'Exit', 'TimeExit', 'PercentStopLoss', 'PercentTakeProfit']
 
 
 class SpecError(ValueError):
@@ -76,7 +76,7 @@ class BaseSignal(object):
         elif self.volume < 0:
             return (self.price - cost_points) * (1 - cost_percent / 100)
         else:
-            raise ValueError('[critical] Volume is not set')
+            raise ValueError('Incorrect Volume amount: %s' % self.volume)
 
     @property
     def transaction_price(self):
@@ -155,32 +155,46 @@ class TimeExit(BaseExit):
         self.condition = self.entry.condition.shift(self.periods).fillna(value=False)
 
 
-class BaseStopLoss(BaseExit):
+class BaseConditionalExit(BaseExit):
     def __init__(self, trigger_price=None, instant_execution=False, **options):
-        super(BaseStopLoss, self).__init__(**options)
+        super(BaseConditionalExit, self).__init__(**options)
         self.trigger_price = trigger_price
         self.instant_execution = instant_execution
         self.stop_level = None
+        self.stop_active = None
 
     def set_entry(self, entry):
         self.entry = entry
-        self.set_stop_level()
-
-        trigger_price = self.trigger_price if self.trigger_price is not None else entry.price
-
-        stop_cond = (trigger_price != 0) & (self.stop_level != 0)
-
-        if entry.volume > 0:
-            self.price = self.stop_level if self.instant_execution else entry.price
-            self.condition = (trigger_price < self.stop_level) & stop_cond
-
-        elif entry.volume < 0:
-            self.price = self.stop_level if self.instant_execution else entry.price
-            self.condition = (trigger_price > self.stop_level) & stop_cond
+        self.set_level()
+        if self.trigger_price is None:
+            self.trigger_price = self.entry.price
+        self.price = self.stop_level if self.instant_execution else entry.price
+        self.stop_active = (self.trigger_price != 0) & (self.stop_level != 0)
+        self.condition = self.get_condition() & self.stop_active
 
     @abstractmethod
-    def set_stop_level(self):
+    def set_level(self):
         raise NotImplementedError()
+
+    @abstractmethod
+    def get_condition(self):
+        raise NotImplementedError()
+
+
+class BaseStopLoss(BaseConditionalExit):
+    def get_condition(self):
+        if self.entry.volume > 0:
+            return self.trigger_price < self.stop_level
+        elif self.entry.volume < 0:
+            return self.trigger_price > self.stop_level
+
+
+class BaseTakeProfit(BaseConditionalExit):
+    def get_condition(self):
+        if self.entry.volume > 0:
+            return self.trigger_price > self.stop_level
+        elif self.entry.volume < 0:
+            return self.trigger_price < self.stop_level
 
 
 class PercentStopLoss(BaseStopLoss):
@@ -188,10 +202,24 @@ class PercentStopLoss(BaseStopLoss):
         super(PercentStopLoss, self).__init__(trigger_price=trigger_price, instant_execution=instant_execution)
         self.percent = percent
 
-    def set_stop_level(self):
+    def set_level(self):
         price_at_entry = self.entry.price_at_entry()
         if self.entry.volume > 0:
             self.stop_level = price_at_entry * (1 - self.percent)
 
         elif self.entry.volume < 0:
             self.stop_level = price_at_entry * (1 + self.percent)
+
+
+class PercentTakeProfit(BaseTakeProfit):
+    def __init__(self, percent, trigger_price=None, instant_execution=False):
+        super(PercentTakeProfit, self).__init__(trigger_price=trigger_price, instant_execution=instant_execution)
+        self.percent = percent
+
+    def set_level(self):
+        price_at_entry = self.entry.price_at_entry()
+        if self.entry.volume > 0:
+            self.stop_level = price_at_entry * (1 + self.percent)
+
+        elif self.entry.volume < 0:
+            self.stop_level = price_at_entry * (1 - self.percent)
