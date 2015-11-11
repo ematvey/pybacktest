@@ -1,9 +1,13 @@
+# coding: utf8
+
+# part of pybacktest package: https://github.com/ematvey/pybacktest
+
 from itertools import product
 
 import pandas as pd
 
 from pybacktest.backtest import Backtest
-
+__all__ = ['WalkForwardTest']
 
 def paramgrid(param_grid):
     keys = []

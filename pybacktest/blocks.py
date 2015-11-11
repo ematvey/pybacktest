@@ -1,9 +1,16 @@
+# coding: utf8
+
+# part of pybacktest package: https://github.com/ematvey/pybacktest
+
 import numbers
 from abc import abstractmethod
 
+import numpy
 import pandas
 
-__all__ = ['SpecError', 'Entry', 'Long', 'Short', 'Exit', 'TimeExit', 'PercentStopLoss', 'PercentTakeProfit']
+__all__ = ['SpecError',
+           'Entry', 'Long', 'Short',
+           'Exit', 'TimeExit', 'PercentStopLoss', 'PercentTakeProfit']
 
 
 class SpecError(ValueError):
@@ -48,8 +55,9 @@ class BaseSignal(object):
     def condition(self, value):
         if value is None:
             return
-        if not isinstance(value, pandas.Series):
-            raise SpecError("condition has incorrect type: %s (should be <pandas.Series>)" % type(value))
+        if not isinstance(value, (pandas.Series, numpy.ndarray)):
+            raise SpecError(
+                "condition has incorrect type: %s (should be <pandas.Series> or <numpy.ndarray>)" % type(value))
         self._condition = value
 
     @property
@@ -62,11 +70,26 @@ class BaseSignal(object):
     def price(self, value):
         if value is None:
             return
-        if not isinstance(value, pandas.Series):
-            raise SpecError("condition has incorrect type: %s (should be <pandas.Series>)" % type(self._price))
+        if not isinstance(value, (pandas.Series, numpy.ndarray)):
+            raise SpecError(
+                "condition has incorrect type: %s (should be <pandas.Series> or <numpy.ndarray>)" % type(self._price))
         self._price = value
 
-    def get_transaction_price(self, cost_percent, cost_points):
+    def transaction_price(self, cost_percent=None, cost_points=None):
+        """
+        Get trade price after transaction costs have been applied.
+
+        :param cost_percent: Tx cost in % of asset value.
+            If individual costs are assigned to this signal,
+            it will be ignored.
+        :param cost_points: Tx cost in points of asset price.
+            If individual costs are assigned to this signal,
+            it will be ignored.
+        :return: Transaction price series.
+        """
+        if self.transaction_costs_assigned:
+            cost_percent = self.txcost_pct
+            cost_points = self.txcost_points
         if cost_percent is None:
             cost_percent = 0.0
         if cost_points is None:
@@ -79,19 +102,18 @@ class BaseSignal(object):
             raise ValueError('Incorrect Volume amount: %s' % self.volume)
 
     @property
-    def transaction_price(self):
-        return self.get_transaction_price(self.txcost_pct, self.txcost_points)
-
-    @property
     def transaction_costs_assigned(self):
         return self.txcost_points is not None or self.txcost_pct is not None
+
+    def __repr__(self):
+        return self.__class__.__name__
 
 
 class BaseExit(BaseSignal):
     def __init__(self, **options):
         super(BaseExit, self).__init__(**options)
 
-    def set_entry(self, entry):
+    def _set_entry(self, entry):
         self.entry = entry
 
     @property
@@ -100,7 +122,17 @@ class BaseExit(BaseSignal):
 
 
 class Entry(BaseSignal):
+    """Generic entry signal"""
+
     def __init__(self, condition, price, volume, **options):
+        """
+        :param condition: Entry condition.
+            pandas.Series with boolean values.
+        :param price: Trade price for entries.
+            pandas.Series with float values.
+        :param volume: Directional volume of entry. Volume ==1 is Long, ==-1 is Short.
+            pandas.Series with float values.
+        """
         super(Entry, self).__init__(**options)
         self.condition = condition
         self.price = price
@@ -108,11 +140,16 @@ class Entry(BaseSignal):
         self.exits = []
 
     def exit(self, *exits):
+        """
+        Attach Exit to this Entry
+
+        :param exits: List of Exits to attach
+        """
         for e in exits:
             if not isinstance(e, BaseSignal):
                 raise SpecError('Exit bad type: %s' % type(e))
             if isinstance(e, BaseExit):
-                e.set_entry(self)
+                e._set_entry(self)
             self.exits.append(e)
         return self
 
@@ -121,34 +158,60 @@ class Entry(BaseSignal):
 
 
 class Long(Entry):
-    def __init__(self, condition, price, volume=1.0, **options):
-        super(Long, self).__init__(condition, price, volume, **options)
+    """Long entry signal"""
+
+    def __init__(self, condition, price, **options):
+        """
+        :param condition: Long entry condition.
+            pandas.Series with boolean values.
+        :param price: Trade price for entries.
+            pandas.Series with float values.
+        """
+        super(Long, self).__init__(condition, price, volume=1.0, **options)
 
 
 class Short(Entry):
-    def __init__(self, condition, price, volume=-1.0, **options):
-        super(Short, self).__init__(condition, price, volume, **options)
+    """Short entry signal"""
+
+    def __init__(self, condition, price, **options):
+        """
+        :param condition: Short entry condition.
+            pandas.Series with boolean values.
+        :param price: Trade price for entries.
+            pandas.Series with float values.
+        """
+        super(Short, self).__init__(condition, price, volume=-1.0, **options)
 
 
 class Exit(BaseExit):
+    """Generic exit signal"""
+
     def __init__(self, condition, price=None, **options):
+        """
+        :param condition: Exit condition.
+            pandas.Series with boolean values.
+        :param price: Price of exits (defaults to Entry price).
+            pandas.Series with float values.
+        """
         super(Exit, self).__init__(**options)
         self.condition = condition
         self.price = price
 
-    def set_entry(self, entry):
+    def _set_entry(self, entry):
         self.entry = entry
         if self._price is None:
             self.price = self.entry.price
 
 
 class TimeExit(BaseExit):
+    """Exit after given number of periods (time steps, as infered from data)"""
+
     def __init__(self, periods, price=None, **options):
         super(TimeExit, self).__init__(**options)
         self.periods = periods
         self.price = price
 
-    def set_entry(self, entry):
+    def _set_entry(self, entry):
         self.entry = entry
         if self._price is None:
             self.price = self.entry.price
@@ -163,26 +226,26 @@ class BaseConditionalExit(BaseExit):
         self.stop_level = None
         self.stop_active = None
 
-    def set_entry(self, entry):
+    def _set_entry(self, entry):
         self.entry = entry
-        self.set_level()
+        self._set_level()
         if self.trigger_price is None:
             self.trigger_price = self.entry.price
         self.price = self.stop_level if self.instant_execution else entry.price
         self.stop_active = (self.trigger_price != 0) & (self.stop_level != 0)
-        self.condition = self.get_condition() & self.stop_active
+        self.condition = self._get_condition() & self.stop_active
 
     @abstractmethod
-    def set_level(self):
+    def _set_level(self):
         raise NotImplementedError()
 
     @abstractmethod
-    def get_condition(self):
+    def _get_condition(self):
         raise NotImplementedError()
 
 
 class BaseStopLoss(BaseConditionalExit):
-    def get_condition(self):
+    def _get_condition(self):
         if self.entry.volume > 0:
             return self.trigger_price < self.stop_level
         elif self.entry.volume < 0:
@@ -190,7 +253,7 @@ class BaseStopLoss(BaseConditionalExit):
 
 
 class BaseTakeProfit(BaseConditionalExit):
-    def get_condition(self):
+    def _get_condition(self):
         if self.entry.volume > 0:
             return self.trigger_price > self.stop_level
         elif self.entry.volume < 0:
@@ -198,11 +261,13 @@ class BaseTakeProfit(BaseConditionalExit):
 
 
 class PercentStopLoss(BaseStopLoss):
+    """Stop Loss exit, defined in terms of percent of asset price"""
+
     def __init__(self, percent, trigger_price=None, instant_execution=False):
         super(PercentStopLoss, self).__init__(trigger_price=trigger_price, instant_execution=instant_execution)
         self.percent = percent
 
-    def set_level(self):
+    def _set_level(self):
         price_at_entry = self.entry.price_at_entry()
         if self.entry.volume > 0:
             self.stop_level = price_at_entry * (1 - self.percent)
@@ -212,11 +277,13 @@ class PercentStopLoss(BaseStopLoss):
 
 
 class PercentTakeProfit(BaseTakeProfit):
+    """Take Profit exit, defined in terms of percent of asset price"""
+
     def __init__(self, percent, trigger_price=None, instant_execution=False):
         super(PercentTakeProfit, self).__init__(trigger_price=trigger_price, instant_execution=instant_execution)
         self.percent = percent
 
-    def set_level(self):
+    def _set_level(self):
         price_at_entry = self.entry.price_at_entry()
         if self.entry.volume > 0:
             self.stop_level = price_at_entry * (1 + self.percent)

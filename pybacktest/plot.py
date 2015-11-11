@@ -1,3 +1,7 @@
+# coding: utf8
+
+# part of pybacktest package: https://github.com/ematvey/pybacktest
+
 class Plotter(object):
     class Slicer(object):
         def __init__(self, target):

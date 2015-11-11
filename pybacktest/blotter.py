@@ -1,3 +1,7 @@
+# coding: utf8
+
+# part of pybacktest package: https://github.com/ematvey/pybacktest
+
 import numpy
 import pandas
 
@@ -40,20 +44,14 @@ class Blotter(object):
         positions = pandas.Series(index=entry.condition.index, dtype='float')
         trade_price = pandas.Series(index=entry.condition.index, dtype='float')
 
-        if entry.transaction_costs_assigned:
-            entry_tx_price = entry.transaction_price
-        else:
-            entry_tx_price = entry.get_transaction_price(self.cost_percent, self.cost_points)
+        entry_tx_price = entry.transaction_price(self.cost_percent, self.cost_points)
 
         positions.ix[entry.condition] = entry.volume
         trade_price[entry.condition] = entry_tx_price.ix[entry.condition]
 
         for ex in entry.exits:
             positions.ix[ex.condition] = 0.0
-            if ex.transaction_costs_assigned:
-                exit_tx_price = ex.transaction_price
-            else:
-                exit_tx_price = ex.get_transaction_price(self.cost_percent, self.cost_points)
+            exit_tx_price = ex.transaction_price(self.cost_percent, self.cost_points)
             trade_price.ix[ex.condition] = exit_tx_price[ex.condition]
 
         positions.iloc[-1] = 0.0
