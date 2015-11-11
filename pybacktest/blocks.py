@@ -261,32 +261,52 @@ class BaseTakeProfit(BaseConditionalExit):
 
 
 class PercentStopLoss(BaseStopLoss):
-    """Stop Loss exit, defined in terms of percent of asset price"""
+    """Stop Loss exit, defined in terms of percentage of asset price"""
 
-    def __init__(self, percent, trigger_price=None, instant_execution=False):
-        super(PercentStopLoss, self).__init__(trigger_price=trigger_price, instant_execution=instant_execution)
+    def __init__(self, percent, trigger_price=None, instant_execution=False, **options):
+        """
+        :param percent: Stop Loss size, specified in percents, i.e. "0.3" means 0.3%, not 30%
+            float
+
+        :param trigger_price: Price series that triggers stop when crosses it (defaults to Entry trade price).
+            Reasonable choices here are High price for buy Stops (short Entries) and Low price for sell Stops.
+            pandas.Series of float values
+
+        :param instant_execution: Executes stop instantly at trigger_price (like real Market Stop Order).
+            Note that with this option backtest might not be realistic (e.g., market opens above/below Stop's
+            trigger price, so stop is executed at Open price, not trigger_price).
+            Also keep in mind that Market order-based Stops often incur higher transaction costs.
+            bool
+        """
+        super(PercentStopLoss, self).__init__(trigger_price=trigger_price, instant_execution=instant_execution,
+                                              **options)
         self.percent = percent
 
     def _set_level(self):
         price_at_entry = self.entry.price_at_entry()
         if self.entry.volume > 0:
-            self.stop_level = price_at_entry * (1 - self.percent)
+            self.stop_level = price_at_entry * (1 - self.percent / 100)
 
         elif self.entry.volume < 0:
-            self.stop_level = price_at_entry * (1 + self.percent)
+            self.stop_level = price_at_entry * (1 + self.percent / 100)
 
 
 class PercentTakeProfit(BaseTakeProfit):
-    """Take Profit exit, defined in terms of percent of asset price"""
+    """Take Profit exit, defined in terms of percentage of asset price"""
 
-    def __init__(self, percent, trigger_price=None, instant_execution=False):
-        super(PercentTakeProfit, self).__init__(trigger_price=trigger_price, instant_execution=instant_execution)
+    def __init__(self, percent, trigger_price=None, instant_execution=False, **options):
+        """
+        Please see PercentStopLoss documentation, PercentTakeProfit behaves similarly
+        (for the other side of the market)
+        """
+        super(PercentTakeProfit, self).__init__(trigger_price=trigger_price, instant_execution=instant_execution,
+                                                **options)
         self.percent = percent
 
     def _set_level(self):
         price_at_entry = self.entry.price_at_entry()
         if self.entry.volume > 0:
-            self.stop_level = price_at_entry * (1 + self.percent)
+            self.stop_level = price_at_entry * (1 + self.percent / 100)
 
         elif self.entry.volume < 0:
-            self.stop_level = price_at_entry * (1 - self.percent)
+            self.stop_level = price_at_entry * (1 - self.percent / 100)
