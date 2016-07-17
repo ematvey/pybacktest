@@ -31,7 +31,7 @@ _days = lambda eqd: eqd.resample('D', how='sum').dropna()
 def sharpe(eqd):
     ''' daily sharpe ratio '''
     d = _days(eqd)
-    return (d.mean() / d.std()) ** (252**0.5)
+    return (d.mean() / d.std()) * (252**0.5)
 
 
 def sortino(eqd):
