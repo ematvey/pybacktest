@@ -170,7 +170,7 @@ class Backtest(object):
         s = '|  %s  |' % self
         print('-' * len(s))
         print(s)
-        print('-' * len(s), '\n')
+        print('-' * len(s) + '\n')
         print(yaml.dump(self.report, allow_unicode=True, default_flow_style=False))
         print('-' * len(s))
 
