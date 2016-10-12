@@ -21,9 +21,7 @@ We use it in our research and production operations.
 
 ## Installation
 ```
-git clone https://github.com/ematvey/pybacktest.git
-cd pybacktest
-python setup.py install
+pip install git+https://github.com/ematvey/pybacktest.git
 ```
 If you don't install it in virtualenv, you might need to prepend last line with sudo.
 
