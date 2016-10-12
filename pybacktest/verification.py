@@ -13,7 +13,7 @@ def iter_verify(strategy_fn, data, window_size):
     sp = None
     mis_cur = {}
     mis_prev = {}
-    print 'iterative verification'
+    print('iterative verification')
     for i in range(window_size, len(data)):
         s = Backtest(strategy_fn(data.iloc[i-window_size:i])).signals
         if (not sp is None) and (sp != s.iloc[-2]).any():
@@ -32,13 +32,13 @@ def iter_verify(strategy_fn, data, window_size):
     if len(df):
         return df
     else:
-        print 'valid'
+        print('valid')
 
 
 def frontal_iterative_signals(strategy_fn, data, window_size, verbose=True):
     front = []
     p_prg = None
-    for i in xrange(window_size, len(data)):
+    for i in range(window_size, len(data)):
         data_subset = data.iloc[i - window_size : i]
         last_sig = Backtest(strategy_fn(data_subset)).signals.iloc[-1]
         front.append(last_sig)

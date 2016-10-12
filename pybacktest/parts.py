@@ -69,7 +69,7 @@ def extract_frame(dataobj, ext_mask, int_mask):
             df[f_int] = obj
         else:
             df[f_int] = None
-    if any(map(lambda x: isinstance(x, pandas.Series), df.values())):
+    if any([isinstance(x, pandas.Series) for x in list(df.values())]):
         return pandas.DataFrame(df)
     return None
 

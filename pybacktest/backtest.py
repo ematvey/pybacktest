@@ -2,13 +2,13 @@
 
 # part of pybacktest package: https://github.com/ematvey/pybacktest
 
-from __future__ import print_function
+
 import time
 
-from pandas.lib import cache_readonly
-
+from cached_property import cached_property
+import pybacktest.performance
+import pybacktest.parts
 import pandas
-from . import parts, performance
 
 
 __all__ = ['Backtest']
@@ -16,7 +16,7 @@ __all__ = ['Backtest']
 
 class StatEngine(object):
     def __init__(self, equity_fn):
-        self._stats = [i for i in dir(performance) if not i.startswith('_')]
+        self._stats = [i for i in dir(pybacktest.performance) if not i.startswith('_')]
         self._equity_fn = equity_fn
 
     def __dir__(self):
@@ -25,7 +25,7 @@ class StatEngine(object):
     def __getattr__(self, attr):
         if attr in self._stats:
             equity = self._equity_fn()
-            fn = getattr(performance, attr)
+            fn = getattr(pybacktest.performance, attr)
             try:
                 return fn(equity)
             except:
@@ -85,13 +85,13 @@ class Backtest(object):
         To get a hang of it, check out the examples.
 
         """
-        self._dataobj = dict([(k.lower(), v) for k, v in dataobj.iteritems()])
+        self._dataobj = dict([(k.lower(), v) for k, v in dataobj.items()])
         self._sig_mask_ext = signal_fields
         self._pr_mask_ext = price_fields
         self.name = name
-        self.trdplot = self.sigplot = parts.Slicer(self.plot_trades,
+        self.trdplot = self.sigplot = pybacktest.parts.Slicer(self.plot_trades,
                                                    obj=self.ohlc)
-        self.eqplot = parts.Slicer(self.plot_equity, obj=self.ohlc)
+        self.eqplot = pybacktest.parts.Slicer(self.plot_equity, obj=self.ohlc)
         self.run_time = time.strftime('%Y-%d-%m %H:%M %Z', time.localtime())
         self.stats = StatEngine(lambda: self.equity)
 
@@ -102,21 +102,21 @@ class Backtest(object):
     def dataobj(self):
         return self._dataobj
 
-    @cache_readonly
+    @cached_property
     def signals(self):
-        return parts.extract_frame(self.dataobj, self._sig_mask_ext,
+        return pybacktest.parts.extract_frame(self.dataobj, self._sig_mask_ext,
                                    self._sig_mask_int).fillna(value=False)
 
-    @cache_readonly
+    @cached_property
     def prices(self):
-        return parts.extract_frame(self.dataobj, self._pr_mask_ext,
+        return pybacktest.parts.extract_frame(self.dataobj, self._pr_mask_ext,
                                    self._pr_mask_int)
 
-    @cache_readonly
+    @cached_property
     def default_price(self):
         return self.ohlc.O  # .shift(-1)
 
-    @cache_readonly
+    @cached_property
     def trade_price(self):
         pr = self.prices
         if pr is None:
@@ -128,12 +128,12 @@ class Backtest(object):
             dp[s] = p[s]
         return dp.combine_first(self.default_price)
 
-    @cache_readonly
+    @cached_property
     def positions(self):
-        return parts.signals_to_positions(self.signals,
+        return pybacktest.parts.signals_to_positions(self.signals,
                                           mask=self._sig_mask_int)
 
-    @cache_readonly
+    @cached_property
     def trades(self):
         p = self.positions.reindex(
             self.signals.index).ffill().shift().fillna(value=0)
@@ -147,11 +147,11 @@ class Backtest(object):
         t['vol'] = t.pos.diff()
         return t.dropna()
 
-    @cache_readonly
+    @cached_property
     def equity(self):
-        return parts.trades_to_equity(self.trades)
+        return pybacktest.parts.trades_to_equity(self.trades)
 
-    @cache_readonly
+    @cached_property
     def ohlc(self):
         for possible_name in self._ohlc_possible_fields:
             s = self.dataobj.get(possible_name)
@@ -159,12 +159,13 @@ class Backtest(object):
                 return s
         raise Exception("Bars dataframe was not found in dataobj")
 
-    @cache_readonly
+    @cached_property
     def report(self):
-        return performance.performance_summary(self.equity)
+        return pybacktest.performance.performance_summary(self.equity)
 
     def summary(self):
         import yaml
+        from pprint import pprint
 
         s = '|  %s  |' % self
         print('-' * len(s))
@@ -181,7 +182,7 @@ class Backtest(object):
         eq.plot(color='red', label='strategy')
         ix = self.ohlc.ix[eq.index[0]:eq.index[-1]].index
         price = self.ohlc.C
-        (price[ix] - price[ix][0]).resample('W', how='first').dropna() \
+        (price[ix] - price[ix][0]).resample('W').first().dropna() \
             .plot(color='black', alpha=0.5, label='underlying')
 
         import matplotlib.pylab as pylab

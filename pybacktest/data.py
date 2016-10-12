@@ -5,7 +5,7 @@
 """ Set of data-loading helpers """
 
 import pandas as pd
-import pandas.io.data as web
+from pandas_datareader import data as dr
 
 
 def load_from_yahoo(ticker='SPY', start='1900', adjust_close=False):
@@ -23,16 +23,12 @@ def load_from_yahoo(ticker='SPY', start='1900', adjust_close=False):
                 ticker=t, start=start, adjust_close=adjust_close)
              for t in ticker})
 
-    data = web.DataReader(ticker, data_source='yahoo', start=start)
+    data = dr.DataReader(ticker, data_source='yahoo', start=start)
+    r = data['Adj Close'] / data['Close']
+    ohlc_cols = ['Open', 'High', 'Low', 'Close']
+    data[ohlc_cols] = data[ohlc_cols].mul(r, axis=0)
+    data = data.drop('Adj Close', axis=1)
     data = data.rename(columns={'Open': 'O', 'High': 'H', 'Low': 'L',
                                 'Close': 'C', 'Adj Close': 'AC',
                                 'Volume': 'V'})
-    if adjust_close:
-        adj = data['AC'] - data['C']
-        data['O'] += adj
-        data['H'] += adj
-        data['L'] += adj
-        data['C'] += adj
-        data = data.drop('AC', axis=1)
-
     return data

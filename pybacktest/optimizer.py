@@ -41,26 +41,26 @@ class Optimizer(object):
         self.strategy_fn = strategy_fn
         self.ohlc = ohlc
         self.metrics = metrics
-        assert all([len(p) == 3 for p in params.values()]), 'Wrong params specified'
+        assert all([len(p) == 3 for p in list(params.values())]), 'Wrong params specified'
         self.params = params.copy()
         self.processes = processes
 
     def add_param(self, param, start, stop, step):
         self.params[param] = [start, stop, step]
 
-    @cached_property(ttl=0)
+    @cached_property
     def results(self):
         p = self.params
-        pn = p.keys()
+        pn = list(p.keys())
         results = []
         param_space = [
-            dict(zip(pn, pset)) for pset in
+            dict(list(zip(pn, pset))) for pset in
             itertools.product(
                 *[numpy.arange(p[k][0], p[k][1]+.000001, p[k][2]) for k in pn]
             )
         ]
 
-        args_gen = itertools.izip(param_space,
+        args_gen = zip(param_space,
                                   itertools.repeat(self.strategy_fn),
                                   itertools.repeat(self.ohlc),
                                   itertools.repeat(self.metrics))

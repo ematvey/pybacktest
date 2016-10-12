@@ -26,7 +26,7 @@ def ExRem(array1, array2):
     while i < len(array1):
         if array1[i]:
             array[i] = True
-            for j in xrange(i, len(array2)):
+            for j in range(i, len(array2)):
                 if array2[j]:
                     break
             i = j
@@ -55,7 +55,7 @@ def TimeNum(x):
     http://www.amibroker.com/guide/afl/afl_view.php?name=timenum
     
     """
-    timecode = map(lambda x: x.hour * 10000 + x.minute * 100 + x.second, map(lambda x: x.time(), x.index))
+    timecode = [x.hour * 10000 + x.minute * 100 + x.second for x in [x.time() for x in x.index]]
     return pandas.Series(timecode, index=x.index)
 
 
@@ -66,5 +66,5 @@ def DateNum(x):
     http://www.amibroker.com/guide/afl/afl_view.php?name=datenum
 
     """
-    datecode = map(lambda x: 10000 * (x.year - 1900) + 100 * x.month + x.day, map(lambda x: x.date(), x.index))
+    datecode = [10000 * (x.year - 1900) + 100 * x.month + x.day for x in [x.date() for x in x.index]]
     return pandas.Series(datecode, index=x.index)
