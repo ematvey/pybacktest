@@ -92,26 +92,26 @@ def performance_summary(equity_diffs, quantile=0.99, precision=4):
 
     return _format_out({
         'backtest': {
-            'from': str(eqd.index[0]),
-            'to': str(eqd.index[-1]),
-            'days': (eqd.index[-1] - eqd.index[0]).days,
+            'from': str(start(eqd)),
+            'to': str(end(eqd)),
+            'days': days(eqd),
             'trades': len(eqd),
             },
         'performance': {
             'profit': eqd.sum(),
             'averages': {
-                'trade': eqd.mean(),
-                'gain': eqd[eqd > 0].mean(),
-                'loss': eqd[eqd < 0].mean(),
+                'trade': average(eqd),
+                'gain': average_gain(eqd),
+                'loss': average_loss(eqd),
                 },
-            'winrate': float(sum(eqd > 0)) / len(eqd),
-            'payoff': eqd[eqd > 0].mean() / -eqd[eqd < 0].mean(),
-            'PF': abs(eqd[eqd > 0].sum() / eqd[eqd < 0].sum()),
-            'RF': eqd.sum() / maxdd(eqd),
+            'winrate': winrate(eqd),
+            'payoff': payoff(eqd),
+            'PF': PF(eqd),
+            'RF': RF(eqd),
             },
         'risk/return profile': {
-            'sharpe': eqd.mean() / eqd.std(),
-            'sortino': eqd.mean() / eqd[eqd < 0].std(),
+            'sharpe': sharpe(eqd),
+            'sortino': sortino(eqd),
             'maxdd': maxdd(eqd),
             'WCDD (monte-carlo {} quantile)'.format(quantile): mcmdd(eqd, quantile=quantile),
             'UPI': UPI(eqd),
