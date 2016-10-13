@@ -36,7 +36,7 @@ def sharpe(eqd):
 def sortino(eqd):
     ''' daily sortino ratio '''
     d = _days(eqd)
-    return (d.mean() / d[d < 0]).std()
+    return (d.mean() / d[d < 0].std()) * (252**0.5)
 
 
 def ulcer(eqd):
