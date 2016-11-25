@@ -5,7 +5,7 @@
 """ Production-related code, used to extract signals from Backtest. """
 
 
-from . import Backtest
+from pybacktest.backtest import Backtest
 
 
 def check_position_change(strategy_outs):
@@ -20,6 +20,6 @@ def check_position_change(strategy_outs):
 
     bt = Backtest(strategy_outs)
     pos = bt.positions.reindex(bt.ohlc.index).ffill().fillna(value=0)
-    
+
     if pos.iloc[-1] != pos.iloc[-2]:
         return pos.iloc[-1]
