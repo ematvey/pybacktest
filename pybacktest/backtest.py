@@ -176,6 +176,7 @@ class Backtest(object):
 
     def plot_equity(self, subset=None, ax=None):
         import matplotlib.pylab as pylab
+        _ = None
         if ax is None:
             _,ax = pylab.subplots()
         
@@ -197,6 +198,7 @@ class Backtest(object):
         ax.legend(loc='best')
         ax.set_title(str(self))
         ax.set_ylabel('Equity for %s' % subset)
+        return _,ax
 
     def plot_trades(self, subset=None, ax=None):
         if subset is None:
@@ -208,6 +210,7 @@ class Backtest(object):
         sx = fr.price[(fr.pos.shift() < 0) & (fr.vol > 0)]
 
         import matplotlib.pylab as pylab
+        _ = None
         if ax is None:
             _,ax = pylab.subplots()
 
@@ -221,4 +224,5 @@ class Backtest(object):
                    label='short exit')
         
         self.ohlc.O.ix[subset].plot(color='black', label='price', ax=ax)
-        ax.set_ylabel('Trades for %s' % subset)
+        ax.set_ylabel('Trades for %s' % subset)i
+        return _,ax
