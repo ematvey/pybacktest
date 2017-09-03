@@ -174,23 +174,31 @@ class Backtest(object):
         print(yaml.dump(self.report, allow_unicode=True, default_flow_style=False))
         print('-' * len(s))
 
-    def plot_equity(self, subset=None):
+    def plot_equity(self, subset=None, ax=None):
+        import matplotlib.pylab as pylab
+        if ax is None:
+            _,ax = pylab.subplots()
+        
         if subset is None:
             subset = slice(None, None)
         assert isinstance(subset, slice)
         eq = self.equity[subset].cumsum()
-        eq.plot(color='red', label='strategy')
-        ix = self.ohlc.ix[eq.index[0]:eq.index[-1]].index
-        price = self.ohlc.C
-        (price[ix] - price[ix][0]).resample('W').first().dropna() \
-            .plot(color='black', alpha=0.5, label='underlying')
+        
+        eq = self.equity.ix[subset].cumsum()
+        ix = eq.index
+        eq.plot(color='red', style='-',ax=ax)
 
-        import matplotlib.pylab as pylab
+        #eq.plot(color='red', label='strategy',ax=ax)
+        #ix = self.ohlc.ix[eq.index[0]:eq.index[-1]].index
+        #price = self.ohlc.C
+        #(price[ix] - price[ix][0]).resample('W').first().dropna() \
+        #    .plot(color='black', alpha=0.5, label='underlying', ax=ax)
 
-        pylab.legend(loc='best')
-        pylab.title('%s\nEquity' % self)
+        ax.legend(loc='best')
+        ax.set_title(str(self))
+        ax.set_ylabel('Equity for %s' % subset)
 
-    def plot_trades(self, subset=None):
+    def plot_trades(self, subset=None, ax=None):
         if subset is None:
             subset = slice(None, None)
         fr = self.trades.ix[subset]
@@ -200,18 +208,17 @@ class Backtest(object):
         sx = fr.price[(fr.pos.shift() < 0) & (fr.vol > 0)]
 
         import matplotlib.pylab as pylab
+        if ax is None:
+            _,ax = pylab.subplots()
 
-        pylab.plot(le.index, le.values, '^', color='lime', markersize=12,
+        ax.plot(le.index, le.values, '^', color='lime', markersize=12,
                    label='long enter')
-        pylab.plot(se.index, se.values, 'v', color='red', markersize=12,
+        ax.plot(se.index, se.values, 'v', color='red', markersize=12,
                    label='short enter')
-        pylab.plot(lx.index, lx.values, 'o', color='lime', markersize=7,
+        ax.plot(lx.index, lx.values, 'o', color='lime', markersize=7,
                    label='long exit')
-        pylab.plot(sx.index, sx.values, 'o', color='red', markersize=7,
+        ax.plot(sx.index, sx.values, 'o', color='red', markersize=7,
                    label='short exit')
-        eq = self.equity.ix[subset].cumsum()
-        ix = eq.index
-        (eq + self.ohlc.O[ix[0]]).plot(color='red', style='-')
-        # self.ohlc.O.ix[ix[0]:ix[-1]].plot(color='black', label='price')
-        self.ohlc.O.ix[subset].plot(color='black', label='price')
-        pylab.title('%s\nTrades for %s' % (self, subset))
+        
+        self.ohlc.O.ix[subset].plot(color='black', label='price', ax=ax)
+        ax.set_ylabel('Trades for %s' % subset)
