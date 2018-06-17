@@ -224,5 +224,5 @@ class Backtest(object):
                    label='short exit')
         
         self.ohlc.O.ix[subset].plot(color='black', label='price', ax=ax)
-        ax.set_ylabel('Trades for %s' % subset)i
+        ax.set_ylabel('Trades for %s' % subset)
         return _,ax
