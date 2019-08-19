@@ -66,9 +66,8 @@ def mcmdd(eqd, runs=100, quantile=0.99, array=False):
 
 
 def holding_periods(eqd):
-    # rather crude, but will do
-    return pd.Series(eqd.index.to_datetime(), index=eqd.index, dtype=object).diff().dropna()
-
+    # rather crude, but will do...
+    return pd.Series(pd.to_datetime(eqd.index), index=eqd.index, dtype=object).diff().dropna()
 
 def performance_summary(equity_diffs, quantile=0.99, precision=4):
     def _format_out(v, precision=4):
