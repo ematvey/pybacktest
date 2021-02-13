@@ -185,7 +185,7 @@ class Backtest(object):
         assert isinstance(subset, slice)
         eq = self.equity[subset].cumsum()
         
-        eq = self.equity.ix[subset].cumsum()
+        eq = self.equity.loc[subset].cumsum()
         ix = eq.index
         eq.plot(color='red', style='-',ax=ax)
 
