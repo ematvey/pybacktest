@@ -75,7 +75,7 @@ class Backtest(object):
 
         *price_fields* specifies names of price Series where trades will take
         place. If some price is not specified (NaN at signal's timestamp, or
-        corresponding Series not present in dataobj altogather), defaults to
+        corresponding Series not present in dataobj altogether), defaults to
         Open price of next bar. By default follows AmiBroker's naming
         convention.
 
