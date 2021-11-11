@@ -1,9 +1,9 @@
 # part of pybacktest package: https://github.com/ematvey/pybacktest
 
-""" Set of pandas.Series processing functions, mimicing AmiBroker's built-ins
+""" Set of pandas.Series processing functions, mimicking AmiBroker's built-ins
 to help translate strategies from AmiScript.
 
-Note that most AmiScript's built-in funtions have more advanced native analogs
+Note that most AmiScript's built-in functions have more advanced native analogs
 in pandas. Funcs like that will not be replicated here.
 
 """
@@ -35,7 +35,7 @@ def ExRem(array1, array2):
 
 
 def BarsSince(x):
-    """ Counts number of periods since last True occured.
+    """ Counts number of periods since last True occurred.
 
     Reference implementation:
     http://www.amibroker.com/guide/afl/afl_view.php?name=barssince
